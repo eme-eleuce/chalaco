@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, BUCKET_NAME, SUPABASE_URL } from '../../utils/supabase';
 import { getOptimizedImageUrl, generateSupabaseImageSrcSet } from '../../utils/imageUtils';
 
@@ -77,6 +78,7 @@ const Showcase = () => {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [animateProjects, setAnimateProjects] = useState(true);
   const projectsPerPage = 6; // Cambiado a 6 para tener una cuadrícula 2x3
 
   useEffect(() => {
@@ -145,15 +147,27 @@ const Showcase = () => {
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Primero activamos la animación de salida
+      setAnimateProjects(false);
+      
+      // Después de un breve retraso, cambiamos de página y activamos la animación de entrada
+      setTimeout(() => {
+        setCurrentPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Pequeño retraso para asegurar que la animación de entrada se active después del cambio de página
+        setTimeout(() => {
+          setAnimateProjects(true);
+        }, 100);
+      }, 300);
     }
   };
 
   const renderPaginationButtons = () => {
     const buttons = [];
-    const maxButtons = 5;
-    let start = Math.max(1, currentPage - 2);
+    // Reducir el número máximo de botones en móvil para evitar desbordamiento
+    const maxButtons = window.innerWidth < 640 ? 3 : 5;
+    let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
     let end = Math.min(totalPages, start + maxButtons - 1);
 
     if (end - start + 1 < maxButtons) {
@@ -179,7 +193,7 @@ const Showcase = () => {
           key={i}
           onClick={() => handlePageChange(i)}
           className={`px-6 py-3 text-xl md:text-2xl font-bold rounded-xl transition-all ${currentPage === i
-            ? 'bg-white text-black shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none'
+            ? 'bg-white text-[#0a0a0a] shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none'
             : 'text-white border-2 border-white shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none'}`}
         >
           {i}
@@ -205,7 +219,7 @@ const Showcase = () => {
   // Mostrar mensaje de error si existe
   if (error) {
     return (
-      <section className="min-h-screen py-16 bg-black">
+      <section className="min-h-screen py-16 bg-[#0a0a0a]">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-white text-center">
             <h2 className="text-2xl md:text-3xl font-bold mb-4">¡Ups! Algo salió mal</h2>
@@ -246,27 +260,44 @@ const Showcase = () => {
   }
 
   return (
-    <section className="min-h-screen py-16 bg-black">
+    <section className="min-h-screen py-16 bg-[#0a0a0a]">
       <div className="container mx-auto px-4">
-        <h2 className="text-6xl md:text-8xl xl:text-9xl 2xl:text-[12rem] font-black text-white mb-20 text-center tracking-tight leading-none">TRABAJOS</h2>
+        <motion.h2 
+          className="text-6xl md:text-8xl xl:text-9xl 2xl:text-[12rem] font-black text-white mb-20 text-center tracking-tight leading-none"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+        >
+          TRABAJOS
+        </motion.h2>
         
         {/* Filtro de categorías */}
-        <div className="flex justify-center gap-4 md:gap-8 mb-16 flex-wrap">
-          {categories.map((category) => (
-            <button
+        <motion.div 
+          className="flex justify-center gap-4 md:gap-8 mb-16 flex-wrap"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
+        >
+          {categories.map((category, index) => (
+            <motion.button
               key={category}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut", delay: 0.3 + index * 0.1 }}
               onClick={() => {
                 setSelectedCategory(category);
                 setCurrentPage(1); // Resetear a la primera página al cambiar categoría
+                setAnimateProjects(false);
+                setTimeout(() => setAnimateProjects(true), 100);
               }}
               className={`px-8 py-4 text-xl md:text-2xl font-bold rounded-xl transition-all ${selectedCategory === category
-                ? 'bg-white text-black shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none'
+                ? 'bg-white text-[#0a0a0a] shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none'
                 : 'text-white border-2 border-white shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none'}`}
             >
               {category}
-            </button>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
         
         <div className="space-y-8">
           {error ? (
@@ -280,33 +311,47 @@ const Showcase = () => {
                     <ProjectSkeleton key={index} />
                   ))
                 ) : (
-                  projects.map((project, index) => (
-                    <Link 
-                      href={`/trabajos/${encodeURIComponent(project.id)}`} 
-                      key={project.id} 
-                      className="flex flex-col space-y-4 group cursor-pointer"
-                      onClick={() => console.log('Navegando al proyecto:', project)}
-                    >
-                      <div className="aspect-video bg-gray-800 rounded-lg overflow-hidden relative">
-                        <Image
-                          src={project.imageUrl}
-                          alt={project.name}
-                          fill
-                          sizes="(max-width: 640px) 100vw, 33vw"
-                          className="object-cover transition-transform duration-300 group-hover:scale-110"
-                          quality={75}
-                          priority={index < 3} // Priorizar carga de las primeras 3 imágenes
-                        />
-                      </div>
-                      <div className="space-y-2 px-1">
-                        <h3 className="text-2xl md:text-3xl font-black italic text-white tracking-wide leading-tight group-hover:text-green-500 transition-colors">{project.name}</h3>
-                        <div className="w-12 h-1 bg-white my-3 group-hover:bg-green-500 transition-colors"></div>
-                        <p className="text-lg md:text-xl lg:text-2xl text-white font-medium">
-                          {project.client} <span className="opacity-75 mx-3">|</span> <span className="text-green-500">{project.category}</span>
-                        </p>
-                      </div>
-                    </Link>
-                  ))
+                  <AnimatePresence mode="wait">
+                    {animateProjects && projects.map((project, index) => (
+                      <motion.div
+                        key={project.id}
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ 
+                          duration: 0.6, 
+                          ease: "easeOut",
+                          delay: index * 0.1 // Efecto escalonado
+                        }}
+                      >
+                        <Link 
+                          href={`/trabajos/${encodeURIComponent(project.id)}`} 
+                          className="flex flex-col space-y-4 group cursor-pointer"
+                          onClick={() => console.log('Navegando al proyecto:', project)}
+                        >
+                          <div className="aspect-video bg-gray-800 rounded-lg overflow-hidden relative">
+                            <Image
+                              src={project.imageUrl}
+                              alt={project.name}
+                              fill
+                              sizes="(max-width: 640px) 100vw, 33vw"
+                              className="object-cover transition-transform duration-300 group-hover:scale-110"
+                              quality={75}
+                              priority={index < 3} // Priorizar carga de las primeras 3 imágenes
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
+                          </div>
+                          <div className="space-y-2 px-1 group">
+                            <h3 className="text-2xl md:text-3xl font-black italic text-white tracking-wide leading-tight group-hover:text-green-500 transition-colors">{project.name}</h3>
+                            <div className="w-12 h-1 bg-white my-3 group-hover:bg-green-500 transition-colors"></div>
+                            <p className="text-lg md:text-xl lg:text-2xl text-white font-medium">
+                              {project.client} <span className="opacity-75 mx-3">|</span> <span className="text-green-500">{project.category}</span>
+                            </p>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 )}
               </div>
             </div>
@@ -314,9 +359,14 @@ const Showcase = () => {
           
           {/* Paginación */}
           {!loading && totalPages > 1 && (
-            <div className="flex justify-center items-center gap-4 md:gap-6 mt-12">
+            <motion.div 
+              className="flex flex-wrap justify-center items-center gap-3 md:gap-6 mt-12 px-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut", delay: 0.8 }}
+            >
               {renderPaginationButtons()}
-            </div>
+            </motion.div>
           )}
         </div>
       </div>

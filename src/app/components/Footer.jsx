@@ -17,9 +17,9 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row justify-between items-center space-y-6 sm:space-y-0">
           {/* Copyright */}
           <div className="flex items-center space-x-2">
-            <span className="text-base sm:text-lg font-bold tracking-wider">CHALACO FILMS</span>
+            <span className="text-[#0a0a0a] sm:text-lg font-bold tracking-wider">CHALACO FILMS</span>
             <FaRegCopyright className="text-sm sm:text-base" />
-            <span className="text-base sm:text-lg">{currentYear}</span>
+            <span className="text-[#0a0a0a] sm:text-lg">{currentYear}</span>
           </div>
 
           {/* Redes sociales */}

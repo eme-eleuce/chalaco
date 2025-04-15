@@ -1,4 +1,4 @@
-import { Bebas_Neue } from "next/font/google";
+import { Bebas_Neue, Roboto } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -7,6 +7,12 @@ const bebas = Bebas_Neue({
   subsets: ["latin"],
   display: 'swap',
   weight: '400',
+});
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  display: 'swap',
+  weight: '700',
 });
 
 export const metadata = {
@@ -18,9 +24,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${bebas.className} antialiased overflow-x-hidden bg-white`}
+        className={`antialiased overflow-x-hidden bg-white`}
       >
-        <div className="flex flex-col min-h-screen w-full relative">
+        {/* Aplicamos la fuente bebas solo al contenedor principal, permitiendo usar roboto en párrafos */}
+        <div className={`${bebas.className} flex flex-col min-h-screen w-full relative`}>
           <Navbar />
           <main className="flex-1">
             {children}

@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { supabase, BUCKET_NAME, SUPABASE_URL } from '../../utils/supabase';
 import { getOptimizedImageUrl, generateSupabaseImageSrcSet } from '../../utils/imageUtils';
 
@@ -91,6 +92,7 @@ const WorkDetails = ({ projectId }) => {
   const [mainImage, setMainImage] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -196,6 +198,7 @@ const WorkDetails = ({ projectId }) => {
         setError(error.message || 'Hubo un error al cargar los detalles del proyecto');
       } finally {
         setLoading(false);
+        setInitialLoad(false);
       }
     };
 
@@ -204,24 +207,72 @@ const WorkDetails = ({ projectId }) => {
     }
   }, [projectId]);
 
-  if (loading) {
+  // Mostrar pantalla de carga inicial con logo animado
+  if (initialLoad && loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="animate-pulse space-y-8 w-full max-w-6xl">
-          <div className="bg-gray-700/50 aspect-video w-full rounded-xl"></div>
-          <div className="space-y-4">
-            <div className="h-10 bg-gray-700/50 rounded-md w-3/4"></div>
-            <div className="h-6 bg-gray-700/50 rounded-md w-1/2"></div>
-            <div className="h-40 bg-gray-700/50 rounded-md w-full mt-8"></div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-              {[...Array(8)].map((_, index) => (
-                <div key={index} className="aspect-video bg-gray-700/50 rounded-md"></div>
-              ))}
-            </div>
+      <section className="min-h-screen py-16 bg-black">
+        <div className="flex justify-center items-center min-h-[80vh]">
+          <div className="animate-heartbeat">
+            <Image
+              src="/photos/logob.png"
+              alt="Loading..."
+              width={250}
+              height={250}
+              priority
+            />
+          </div>
+        </div>
+      </section>
+    );
+  }
+  
+  // Componente de esqueleto para cargas subsecuentes
+  const ProjectDetailsSkeleton = () => (
+    <div className="min-h-screen py-12 bg-black text-white">
+      <div className="container mx-auto px-4 space-y-12 animate-pulse">
+        {/* Esqueleto de imagen principal */}
+        <div className="aspect-video w-full relative rounded-xl overflow-hidden bg-gray-800">
+          <div className="absolute inset-0 bg-gray-700/50"></div>
+        </div>
+        
+        {/* Esqueleto de información del proyecto */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-2">
+          {/* Columna izquierda */}
+          <div className="space-y-4 md:px-8 lg:px-12">
+            <div className="h-16 md:h-20 bg-gray-700/50 rounded-md w-3/4"></div>
+            <div className="w-20 h-1 bg-gray-700/50 my-3"></div>
+            <div className="h-8 bg-gray-700/50 rounded-md w-1/3"></div>
+          </div>
+          
+          {/* Columna derecha */}
+          <div className="space-y-4 md:px-8 lg:px-12">
+            <div className="h-12 md:h-16 bg-gray-700/50 rounded-md w-full"></div>
+            <div className="w-20 h-1 bg-gray-700/50 my-3"></div>
+            <div className="h-40 bg-gray-700/50 rounded-md w-full"></div>
+          </div>
+        </div>
+        
+        {/* Esqueleto de sección de video */}
+        <div className="mt-12 md:px-8 lg:px-12">
+          <div className="h-10 bg-gray-700/50 rounded-md w-1/4 mb-6"></div>
+          <div className="aspect-video w-full bg-gray-800/70 rounded-xl"></div>
+        </div>
+        
+        {/* Esqueleto de galería */}
+        <div className="mt-12 md:px-8 lg:px-12">
+          <div className="h-10 bg-gray-700/50 rounded-md w-1/4 mb-8"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, index) => (
+              <div key={index} className="aspect-video bg-gray-800/70 rounded-lg"></div>
+            ))}
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
+  
+  if (!initialLoad && loading) {
+    return <ProjectDetailsSkeleton />;
   }
 
   if (error) {
@@ -235,86 +286,199 @@ const WorkDetails = ({ projectId }) => {
   console.log('Renderizando con estado:', { project, mainImage, galleryImages });
   
   return (
-    <div className="min-h-screen py-12 bg-black text-white">
-      <div className="container mx-auto px-4 space-y-12">
-        {/* Imagen principal */}
+    <motion.div 
+      className="min-h-screen pt-30 md:py-12 bg-[#0a0a0a] text-white"
+    >
+      <motion.div 
+        className="container mx-auto px-4 space-y-12"
+      >
         {mainImage && (
-          <div className="aspect-video w-full relative rounded-xl overflow-hidden bg-gray-800">
-            <Image 
-              src={mainImage.imageUrl}
-              alt={project?.name || 'Imagen principal'}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              priority
-              quality={90}
-            />
-          </div>
+          <MainImageSection mainImage={mainImage} project={project} />
         )}
 
         {/* Información del proyecto - Estructura en dos columnas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16">
-          {/* Columna izquierda: name y year */}
-          <div className="space-y-4">
-            <h1 className="text-4xl md:text-6xl font-black italic text-white tracking-wide leading-tight">
-              {project?.name}
-            </h1>
-            <div className="w-20 h-1 bg-white"></div>
-            <p className="text-2xl md:text-3xl text-white font-medium">
-              {project?.year}
-            </p>
-          </div>
-          
-          {/* Columna derecha: client y description */}
-          <div className="space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              <span className="text-white">Cliente:</span> <span className="text-green-500">{project?.client}</span>
-            </h2>
-            <div className="w-20 h-1 bg-white"></div>
-            <p className="text-lg md:text-xl text-white leading-relaxed">
-              {project?.description}
-            </p>
-          </div>
-        </div>
+        <ProjectInfoSection project={project} />
 
-        {/* Sección de video */}
-        <div className="mt-12">
-          <h2 className="text-3xl md:text-4xl font-black italic text-white tracking-wide mb-6">Video</h2>
-          <div className="aspect-video w-full bg-gray-800/50 rounded-xl flex items-center justify-center">
-            <p className="text-xl text-gray-300">Video disponible proximamente</p>
-          </div>
-        </div>
+        {/* Sección de video - Solo para Comerciales, Videoclips o Institucional */}
+        {(project?.category === 'Comerciales' || project?.category === 'Videoclips' || project?.category === 'Institucional') && (
+          <VideoSection />
+        )}
 
         {/* Galería de imágenes */}
-        <div className="mt-12">
-          <h2 className="text-3xl md:text-4xl font-black italic text-white tracking-wide mb-8">Galería</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {galleryImages.map((image, index) => (
-              <div key={index} className="aspect-video bg-gray-800 rounded-lg overflow-hidden relative group">
-                <Image 
-                  src={image.imageUrl}
-                  alt={`${project?.name} - Imagen ${index + 1}`}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
-                  quality={75}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        <GallerySection project={project} galleryImages={galleryImages} />
         
         {/* Botón Volver */}
-        <div className="mt-20 flex justify-center">
-          <Link 
-            href="/trabajos" 
-            className="px-8 py-4 text-xl md:text-2xl font-bold text-black bg-white rounded-xl shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] transition-all hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none"
-          >
-            VOLVER A TRABAJOS
-          </Link>
-        </div>
+        <BackButtonSection />
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Componente para la imagen principal con animación basada en scroll
+const MainImageSection = ({ mainImage, project }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: false, amount: 0.3 });
+  
+  return (
+    <motion.div 
+      ref={ref}
+      className="aspect-video w-full relative rounded-xl overflow-hidden bg-gray-800"
+      initial={{ y: 30 }}
+      animate={isInView ? { y: 0 } : { y: 30 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+    >
+      <div className="absolute inset-0 flex items-center justify-center">
+        <Image 
+          src={mainImage.imageUrl}
+          alt={project?.name || 'Imagen principal'}
+          fill
+          sizes="100vw"
+          className="object-contain md:object-cover"
+          priority
+          quality={70}
+        />
       </div>
-    </div>
+    </motion.div>
+  );
+};
+
+// Componente para la información del proyecto con animación basada en scroll
+const ProjectInfoSection = ({ project }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: false, amount: 0.3 });
+  
+  return (
+    <motion.div 
+      ref={ref}
+      className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-0 px-2 md:px-18"
+    >
+      {/* Columna izquierda: name y year */}
+      <motion.div 
+        className="space-y-4 text-center md:text-left md:pr-0"
+        initial={{ x: -20 }}
+        animate={isInView ? { x: 0 } : { x: -20 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+      >
+        <h1 className="text-5xl md:text-6xl font-black italic text-white tracking-wide leading-tight">
+          {project?.name}
+        </h1>
+        <div className="w-20 h-1 bg-white mx-auto md:mx-0"></div>
+        <p className="text-xl md:text-2xl lg:text-3xl text-white font-medium flex items-center justify-center md:justify-start">
+          {project?.year && project?.year.trim() !== '' ? (
+            <>
+              {project.year} <span className="opacity-75 mx-3 text-lg">-</span>
+            </>
+          ) : null}
+          <span className="text-green-500">{project?.category}</span>
+        </p>
+      </motion.div>
+      
+      {/* Columna derecha: client y description */}
+      <motion.div 
+        className="space-y-4 lg:mt-10 md:pl-0"
+        initial={{ x: 20 }}
+        animate={isInView ? { x: 0 } : { x: 20 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+      >
+        <h2 className="text-3xl md:text-4xl font-bold">
+          <span className="text-white">Cliente:</span> <span className="text-green-500"> {project?.client}</span>
+        </h2>
+        <div className="w-20 h-1 bg-white"></div>
+        <div className="text-xl md:text-2xl lg:text-2xl text-white roboto-font leading-relaxed  space-y-6 text-justify ">
+          {project?.description?.split('\n').map((paragraph, index) => (
+            paragraph.trim() && <p key={index} className="normal-case">{paragraph}</p>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Componente para la sección de video con animación basada en scroll
+const VideoSection = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: false, amount: 0.3 });
+  
+  return (
+    <motion.div 
+      ref={ref}
+      className="mt-12 md:px-8 lg:px-12"
+      initial={{ y: 30 }}
+      animate={isInView ? { y: 0 } : { y: 30 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+    >
+      <h2 className="text-3xl md:text-5xl font-black italic text-white tracking-wide mb-6">Video</h2>
+      <div className="mx-auto aspect-video w-full md:w-4/5 lg:w-3/4 xl:w-2/3 bg-gray-800/50 rounded-xl flex items-center justify-center">
+        <p className="text-xl text-gray-300">Video disponible proximamente</p>
+      </div>
+    </motion.div>
+  );
+};
+
+// Componente para la galería de imágenes con animación basada en scroll
+const GallerySection = ({ project, galleryImages }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: false, amount: 0.2 });
+  
+  return (
+    <motion.div 
+      ref={ref}
+      className={`${project?.category === 'Fotos' ? 'mt-6' : 'mt-12'} md:px-8 lg:px-12`}
+      initial={{ y: 30 }}
+      animate={isInView ? { y: 0 } : { y: 30 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+    >
+      <h2 className="text-3xl md:text-4xl font-black italic text-white tracking-wide mb-8">Galería</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {galleryImages.map((image, index) => {
+          const imageRef = useRef(null);
+          const isImageInView = useInView(imageRef, { once: false, amount: 0.2 });
+          
+          return (
+            <motion.div
+              key={index}
+              ref={imageRef}
+              initial={{ y: 20 }}
+              animate={isImageInView ? { y: 0 } : { y: 20 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="aspect-video bg-gray-800 rounded-lg overflow-hidden relative group"
+            >
+              <Image 
+                src={image.imageUrl}
+                alt={`${project?.name} - Imagen ${index + 1}`}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-300 group-hover:scale-110"
+                quality={75}
+              />
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+};
+
+// Componente para el botón de volver con animación basada en scroll
+const BackButtonSection = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: false, amount: 0.5 });
+  
+  return (
+    <motion.div 
+      ref={ref}
+      className="mt-20 flex justify-center"
+      initial={{ y: 20 }}
+      animate={isInView ? { y: 0 } : { y: 20 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+    >
+      <Link 
+        href="/trabajos" 
+        className="px-10 py-6 mb-10 text-2xl md:text-3xl lg:text-4xl font-bold text-black bg-white rounded-xl shadow-[8px_8px_0px_0px_rgba(255,255,255,0.3)] transition-all hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none"
+      >
+        VOLVER A TRABAJOS
+      </Link>
+    </motion.div>
   );
 };
 

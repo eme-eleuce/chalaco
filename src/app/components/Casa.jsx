@@ -1,9 +1,10 @@
 
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { motion, useInView } from 'framer-motion';
 import { supabase, BUCKET_NAME, SUPABASE_URL } from '../utils/supabase';
 import { getOptimizedImageUrl, generateSupabaseImageSrcSet, getBlurDataUrl } from '../utils/imageUtils';
 
@@ -97,6 +98,10 @@ const Banner = () => {
   const [projects, setProjects] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Referencias para detectar cuando los elementos están en el viewport
+  const trabajosRef = useRef(null);
+  const isTrabajosSectionInView = useInView(trabajosRef, { once: true, amount: 0.2 });
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -172,7 +177,7 @@ const Banner = () => {
 
   return (
     <>
-    <section className="min-h-screen w-full flex items-center justify-center bg-green-500 text-black">
+    <section className="min-h-screen w-full flex items-center justify-center bg-green-500 text-[#0a0a0a]">
       <div className="w-full max-w-[2000px] px-6 sm:px-8 md:px-12 lg:px-16 xl:px-24 pt-4 pb-8 md:py-20">
         <div className="flex flex-col md:flex-row justify-between items-center gap-12">
           <div className="w-full md:w-1/2 text-center md:text-left">
@@ -185,7 +190,7 @@ const Banner = () => {
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
             </p>
             <button
-              className="px-12 py-6 text-3xl sm:text-4xl font-bold bg-black text-white rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,0.3)] transition-all hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none"
+              className="px-12 py-6 text-3xl sm:text-4xl font-bold bg-[#0a0a0a] text-white rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,0.3)] transition-all hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none"
             >
               SERVICIOS
             </button>
@@ -195,18 +200,25 @@ const Banner = () => {
     </section>
 
     {/* Sección de Trabajos */}
-    <section className="min-h-screen w-full bg-black text-white py-16 px-6 sm:px-8 md:px-12 lg:px-16 xl:px-24">
+    <section className="min-h-screen w-full bg-[#0a0a0a] text-white py-16 px-6 sm:px-8 md:px-12 lg:px-16 xl:px-16" ref={trabajosRef}>
       <div className="max-w-[2000px] mx-auto">
-        <h2 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] 2xl:text-[12rem] font-bold mb-16 text-center tracking-wider">
-          TRABAJOS
-        </h2>
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 50 }}
+          animate={isTrabajosSectionInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+        >
+          <h2 className="text-7xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[10rem] 2xl:text-[12rem] font-bold mb-16 text-center tracking-wider">
+            TRABAJOS
+          </h2>
+        </motion.div>
         
         {error ? (
           <div className="text-red-500 text-center text-xl">{error}</div>
         ) : loading ? (
-          <div className="grid grid-cols-1 gap-8">
+          <div className="grid grid-cols-1 gap-3 md:gap-8">
             {/* Primera fila: 2 columnas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-8 mb-3 md:mb-8">
               <ProjectSkeleton large />
               <ProjectSkeleton large />
             </div>
@@ -219,72 +231,99 @@ const Banner = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8">
+          <div className="grid grid-cols-1 gap-3 md:gap-8">
             {/* Primera fila: 2 columnas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-8 mb-3 md:mb-8">
               {projects.slice(0, 2).map((project, index) => (
-                <div key={project.id} className="flex flex-col space-y-4">
-                  <div className="group aspect-video bg-gray-800 rounded-lg overflow-hidden relative">
-                    <Image
-                      src={project.imageUrl}
-                      alt={project.name}
-                      fill
-                      sizes="(max-width: 640px) 100vw, 50vw"
-                      className="object-cover transition-transform duration-300 group-hover:scale-110"
-                      quality={75}
-                      placeholder="blur"
-                      blurDataURL={project.blurDataUrl}
-                      priority={index === 0}
-                    />
-                  </div>
-                  <div className="space-y-2 px-1">
-                    <h3 className="text-2xl md:text-4xl xl:text-5xl font-black italic text-white tracking-wide leading-tight">{project.name}</h3>
-                    <div className="w-12 h-1 bg-white my-3"></div>
-                    <p className="text-base md:text-xl text-white">
-                      {project.client} <span className="opacity-75">|</span> <span className="text-green-500">{project.category}</span>
-                    </p>
-                  </div>
-                </div>
+                <motion.div 
+                  key={project.id} 
+                  className="flex flex-col space-y-2 md:space-y-4"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={isTrabajosSectionInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                  transition={{ duration: 0.7, ease: "easeOut", delay: index * 0.2 }}
+                >
+                  <Link href={`/trabajos/${project.id}`} className="block cursor-pointer">
+                    <div className="group aspect-video bg-gray-800 rounded-lg overflow-hidden relative">
+                      <Image
+                        src={project.imageUrl}
+                        alt={project.name}
+                        fill
+                        sizes="(max-width: 640px) 100vw, 50vw"
+                        className="object-cover transition-transform duration-300 group-hover:scale-110"
+                        quality={75}
+                        placeholder="blur"
+                        blurDataURL={project.blurDataUrl}
+                        priority={index === 0}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
+                    </div>
+                  </Link>
+                  <Link href={`/trabajos/${project.id}`} className="block cursor-pointer">
+                    <div className="space-y-2 px-1 group">
+                      <h3 className="text-4xl sm:text-5xl md:text-5xl xl:text-6xl font-black italic text-white tracking-wide leading-tight group-hover:text-green-500 transition-colors duration-300">{project.name}</h3>
+                      <div className="w-16 sm:w-24 md:w-16 h-1 bg-white my-4 md:my-3 group-hover:bg-green-500 transition-colors duration-300"></div>
+                      <p className="text-xl sm:text-2xl md:text-2xl lg:text-3xl text-white">
+                        {project.client} <span className="opacity-75">|</span> <span className="text-green-500">{project.category}</span>
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
               ))}
             </div>
             
             {/* Segunda fila: 3 columnas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
               {projects.slice(2, 5).map((project, index) => (
-                <div key={project.id} className="flex flex-col space-y-4">
-                  <div className="group aspect-video bg-gray-800 rounded-lg overflow-hidden relative">
-                    <Image
-                      src={project.imageUrl}
-                      alt={project.name}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1080px) 33vw, 33vw"
-                      className="object-cover transition-transform duration-300 group-hover:scale-110"
-                      quality={75}
-                      placeholder="blur"
-                      blurDataURL={project.blurDataUrl}
-                      priority={false}
-                    />
-                  </div>
-                  <div className="space-y-2 px-1">
-                    <h3 className="text-2xl md:text-2xl font-black italic text-white tracking-wide leading-tight">{project.name}</h3>
-                    <div className="w-8 h-1 bg-white my-2"></div>
-                    <p className="text-base md:text-lg text-white">
-                      {project.client} <span className="opacity-75">|</span> <span className="text-green-500">{project.category}</span>
-                    </p>
-                  </div>
-                </div>
+                <motion.div 
+                  key={project.id} 
+                  className="flex flex-col space-y-2 md:space-y-4"
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={isTrabajosSectionInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                  transition={{ duration: 0.7, ease: "easeOut", delay: index * 0.2 + 0.4 }}
+                >
+                  <Link href={`/trabajos/${project.id}`} className="block cursor-pointer">
+                    <div className="group aspect-video bg-gray-800 rounded-lg overflow-hidden relative">
+                      <Image
+                        src={project.imageUrl}
+                        alt={project.name}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1080px) 33vw, 33vw"
+                        className="object-cover transition-transform duration-300 group-hover:scale-110"
+                        quality={75}
+                        placeholder="blur"
+                        blurDataURL={project.blurDataUrl}
+                        priority={false}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
+                    </div>
+                  </Link>
+                  <Link href={`/trabajos/${project.id}`} className="block cursor-pointer">
+                    <div className="space-y-2 px-1 group">
+                      <h3 className="text-4xl sm:text-4xl md:text-3xl lg:text-4xl font-black italic text-white tracking-wide leading-tight group-hover:text-green-500 transition-colors duration-300">{project.name}</h3>
+                      <div className="w-16 sm:w-20 md:w-12 h-1 bg-white my-4 md:my-3 group-hover:bg-green-500 transition-colors duration-300"></div>
+                      <p className="text-xl sm:text-xl md:text-xl lg:text-2xl text-white">
+                        {project.client} <span className="opacity-75">|</span> <span className="text-green-500">{project.category}</span>
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
               ))}
             </div>
             
             {/* Botón Ver Más Trabajos */}
-            <div className="flex justify-center mt-16">
+            <motion.div 
+              className="flex justify-center mt-16"
+              initial={{ opacity: 0, y: 30 }}
+              animate={isTrabajosSectionInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.7, ease: "easeOut", delay: 0.8 }}
+            >
               <Link 
                 href="/trabajos"
-                className="px-12 py-6 text-3xl sm:text-4xl font-bold bg-white text-black rounded-xl shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] transition-all hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none"
+                className="px-12 py-6 text-3xl sm:text-4xl font-bold bg-white text-[#0a0a0a] rounded-xl shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] transition-all hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none"
               >
                 VER MÁS TRABAJOS
               </Link>
-            </div>
+            </motion.div>
           </div>
         )}
       </div>

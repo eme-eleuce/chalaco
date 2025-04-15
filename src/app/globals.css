@@ -8,6 +8,11 @@ html {
   ;
 }
 
+/* Clase para aplicar la fuente Roboto a párrafos específicos */
+.roboto-font {
+  font-family: 'Roboto', sans-serif;
+}
+
 @keyframes heartbeat {
   0% {
     transform: scale(1);
