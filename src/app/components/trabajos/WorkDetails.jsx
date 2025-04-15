@@ -335,7 +335,7 @@ const MainImageSection = ({ mainImage, project }) => {
           sizes="100vw"
           className="object-contain md:object-cover"
           priority
-          quality={70}
+          quality={60}
         />
       </div>
     </motion.div>

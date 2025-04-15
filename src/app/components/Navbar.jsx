@@ -82,7 +82,7 @@ export default function Navbar() {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50">
-        <div className="flex justify-between items-center px-8 pt-1 md:px-12 md:pt-2">
+        <div className="flex justify-between items-center px-8 pt-0 md:px-12 md:pt-2">
           {/* Logo con animación de entrada */}
           <motion.div 
             className="flex-shrink-0 w-fit h-fit"
@@ -94,13 +94,13 @@ export default function Navbar() {
             }}
             transition={{ duration: 0.5, ease: "easeOut" }}
           >
-            <Link href="/" className="block w-fit h-fit" onClick={closeMenu}>
+            <Link href="/" className="block w-fit h-fit mt-5" onClick={closeMenu}>
               <Image 
                 src="/photos/logob.png"
                 alt="Logo"
                 width={260}
                 height={260}
-                className="w-[170px] h-[110px] md:w-[200px] md:h-[100px] lg:w-[240px] lg:h-[140px] scale-105 transition-all duration-300 hover:scale-100"
+                className="w-[150px] h-[95px] md:w-[200px] md:h-[100px] lg:w-[240px] lg:h-[140px] scale-105 transition-all duration-300 hover:scale-100"
                 priority
               />
             </Link>
@@ -123,7 +123,7 @@ export default function Navbar() {
                   exit={{ rotate: 90, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <IoMdClose className="text-4xl" />
+                  <IoMdClose className="text-4xl lg:text-5xl" />
                 </motion.div>
               ) : (
                 <motion.div
@@ -133,7 +133,7 @@ export default function Navbar() {
                   exit={{ rotate: 90, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <HiBars3 className="text-4xl" />
+                  <HiBars3 className="text-4xl lg:text-5xl" />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -147,9 +147,9 @@ export default function Navbar() {
         <div className="absolute inset-0 bg-black/70" onClick={closeMenu} />
         
         {/* Menú móvil */}
-        <div className={`md:hidden relative h-full flex flex-col px-6 sm:px-8 pt-10 sm:pt-20 text-white transition-all duration-300 transform ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'} overflow-y-auto`}>
+        <div className={`md:hidden relative h-full flex flex-col px-6 sm:px-8  text-white transition-all duration-300 transform ${isMenuOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'} overflow-y-auto`}>
           <div className="flex flex-col h-full">
-            <nav className="flex flex-col space-y-4 sm:space-y-10 mt-25 sm:mt-12">
+            <nav className="flex flex-col space-y-4 sm:space-y-10 mt-20">
               {menuItems.map((item) => (
                 <div key={item.path}>
                   <Link
