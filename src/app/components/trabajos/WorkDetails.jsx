@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { IoMdArrowRoundBack, IoMdClose } from 'react-icons/io';
+import { IoChevronBackOutline, IoChevronForwardOutline } from 'react-icons/io5';
 import { supabase, BUCKET_NAME, SUPABASE_URL } from '../../utils/supabase';
 import { getOptimizedImageUrl, generateSupabaseImageSrcSet } from '../../utils/imageUtils';
 
@@ -314,10 +317,27 @@ const WorkDetails = ({ projectId }) => {
   );
 };
 
+// Componente de skeleton para la imagen principal
+const MainImageSkeleton = () => (
+  <div className="absolute inset-0 bg-gray-800 animate-pulse flex items-center justify-center">
+    <div className="w-20 h-20 border-4 border-gray-600 border-t-green-500 rounded-full animate-spin"></div>
+  </div>
+);
+
 // Componente para la imagen principal con animación basada en scroll
 const MainImageSection = ({ mainImage, project }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, amount: 0.3 });
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Precarga de la imagen usando una técnica compatible con Next.js
+  useEffect(() => {
+    // Usamos el objeto global window para acceder al constructor Image nativo del navegador
+    if (typeof window !== 'undefined') {
+      const img = new window.Image();
+      img.src = mainImage.imageUrl;
+    }
+  }, [mainImage.imageUrl]);
   
   return (
     <motion.div 
@@ -328,14 +348,19 @@ const MainImageSection = ({ mainImage, project }) => {
       transition={{ duration: 0.7, ease: "easeOut" }}
     >
       <div className="absolute inset-0 flex items-center justify-center">
+        {isLoading && <MainImageSkeleton />}
         <Image 
           src={mainImage.imageUrl}
           alt={project?.name || 'Imagen principal'}
           fill
-          sizes="100vw"
-          className="object-contain md:object-cover"
-          priority
-          quality={60}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
+          className="object-contain md:object-cover scale-105"
+          priority={true}
+          quality={45}
+          loading="eager"
+          placeholder="blur"
+          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxODE4MTgiLz48L3N2Zz4="
+          onLoadingComplete={() => setIsLoading(false)}
         />
       </div>
     </motion.div>
@@ -363,7 +388,7 @@ const ProjectInfoSection = ({ project }) => {
           {project?.name}
         </h1>
         <div className="w-20 h-1 bg-white mx-auto md:mx-0"></div>
-        <p className="text-xl md:text-2xl lg:text-3xl text-white font-medium flex items-center justify-center md:justify-start">
+        <p className="roboto-font text-xl md:text-2xl lg:text-3xl text-white font-medium flex items-center justify-center md:justify-start">
           {project?.year && project?.year.trim() !== '' ? (
             <>
               {project.year} <span className="opacity-75 mx-3 text-lg">-</span>
@@ -380,7 +405,7 @@ const ProjectInfoSection = ({ project }) => {
         animate={isInView ? { x: 0 } : { x: 20 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
       >
-        <h2 className="text-3xl md:text-4xl font-bold">
+        <h2 className="roboto-font text-3xl md:text-4xl font-bold">
           <span className="text-white">Cliente:</span> <span className="text-green-500"> {project?.client}</span>
         </h2>
         <div className="w-20 h-1 bg-white"></div>
@@ -416,46 +441,202 @@ const VideoSection = () => {
 };
 
 // Componente para la galería de imágenes con animación basada en scroll
+// Componente Skeleton para mostrar mientras se carga la imagen
+const ImageSkeleton = () => (
+  <div className="absolute inset-0 bg-gray-800 animate-pulse flex items-center justify-center">
+    <div className="w-16 h-16 border-4 border-gray-600 border-t-green-500 rounded-full animate-spin"></div>
+  </div>
+);
+
+// Componente para el visor de imágenes a pantalla completa
+const ImageViewer = ({ isOpen, images, currentIndex, onClose, onPrev, onNext, project }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Resetear el estado de carga cuando cambia la imagen
+  useEffect(() => {
+    setIsLoading(true);
+  }, [currentIndex]);
+  
+  // Manejar teclas para navegación
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isOpen) return;
+      
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') onPrev();
+      if (e.key === 'ArrowRight') onNext();
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose, onPrev, onNext]);
+  
+  // Bloquear scroll cuando el visor está abierto
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen]);
+  
+  if (!isOpen) return null;
+  
+  return (
+    <AnimatePresence>
+      <motion.div 
+        className="fixed inset-0 z-50 bg-black w-screen h-screen flex items-center justify-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        onClick={onClose}
+      >
+        {/* Botón de cierre */}
+        <button 
+          onClick={(e) => {
+            e.stopPropagation(); // Evitar doble cierre
+            onClose();
+          }}
+          className="absolute top-4 right-4 z-50 text-white text-4xl md:text-5xl lg:text-6xl hover:text-green-500 transition-colors p-2"
+          aria-label="Cerrar visor"
+        >
+          <IoMdClose />
+        </button>
+        
+        {/* Botón anterior */}
+        <button 
+          onClick={(e) => {
+            e.stopPropagation(); // Evitar cierre al navegar
+            onPrev();
+          }}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-50 text-white text-5xl hover:text-green-500 transition-colors"
+          aria-label="Imagen anterior"
+          disabled={currentIndex === 0}
+        >
+          <IoChevronBackOutline className={currentIndex === 0 ? 'opacity-50' : 'opacity-100'} />
+        </button>
+        
+        {/* Botón siguiente */}
+        <button 
+          onClick={(e) => {
+            e.stopPropagation(); // Evitar cierre al navegar
+            onNext();
+          }}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-50 text-white text-5xl hover:text-green-500 transition-colors"
+          aria-label="Imagen siguiente"
+          disabled={currentIndex === images.length - 1}
+        >
+          <IoChevronForwardOutline className={currentIndex === images.length - 1 ? 'opacity-50' : 'opacity-100'} />
+        </button>
+        
+        {/* Contador de imágenes */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-lg bg-black/50 px-4 py-2 rounded-full">
+          {currentIndex + 1} / {images.length}
+        </div>
+        
+        {/* Imagen actual */}
+        <div 
+          className="absolute inset-0 w-full h-full flex items-center justify-center px-8 sm:px-16"
+          onClick={(e) => e.stopPropagation()} // Evitar que los clics en la imagen cierren el visor
+        >
+          {isLoading && <ImageSkeleton />}
+          <Image 
+            src={images[currentIndex].imageUrl}
+            alt={`${project?.name} - Imagen ${currentIndex + 1}`}
+            fill
+            sizes="100vw"
+            className="object-contain"
+            quality={85}
+            onLoadingComplete={() => setIsLoading(false)}
+          />
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
 const GallerySection = ({ project, galleryImages }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, amount: 0.2 });
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  const openViewer = (index) => {
+    setCurrentImageIndex(index);
+    setViewerOpen(true);
+  };
+  
+  const closeViewer = () => {
+    setViewerOpen(false);
+  };
+  
+  const goToPrevImage = () => {
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex(currentImageIndex - 1);
+    }
+  };
+  
+  const goToNextImage = () => {
+    if (currentImageIndex < galleryImages.length - 1) {
+      setCurrentImageIndex(currentImageIndex + 1);
+    }
+  };
   
   return (
-    <motion.div 
-      ref={ref}
-      className={`${project?.category === 'Fotos' ? 'mt-6' : 'mt-12'} md:px-8 lg:px-12`}
-      initial={{ y: 30 }}
-      animate={isInView ? { y: 0 } : { y: 30 }}
-      transition={{ duration: 0.7, ease: "easeOut" }}
-    >
-      <h2 className="text-3xl md:text-4xl font-black italic text-white tracking-wide mb-8">Galería</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {galleryImages.map((image, index) => {
-          const imageRef = useRef(null);
-          const isImageInView = useInView(imageRef, { once: false, amount: 0.2 });
-          
-          return (
-            <motion.div
-              key={index}
-              ref={imageRef}
-              initial={{ y: 20 }}
-              animate={isImageInView ? { y: 0 } : { y: 20 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="aspect-video bg-gray-800 rounded-lg overflow-hidden relative group"
-            >
-              <Image 
-                src={image.imageUrl}
-                alt={`${project?.name} - Imagen ${index + 1}`}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-110"
-                quality={75}
-              />
-            </motion.div>
-          );
-        })}
-      </div>
-    </motion.div>
+    <>
+      <motion.div 
+        ref={ref}
+        className={`${project?.category === 'Fotos' ? 'mt-6' : 'mt-12'} md:px-8 lg:px-12`}
+        initial={{ y: 30 }}
+        animate={isInView ? { y: 0 } : { y: 30 }}
+        transition={{ duration: 0.7, ease: "easeOut" }}
+      >
+        <h2 className="text-3xl md:text-4xl font-black italic text-white tracking-wide mb-8">Galería</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {galleryImages.map((image, index) => {
+            const imageRef = useRef(null);
+            const isImageInView = useInView(imageRef, { once: false, amount: 0.2 });
+            
+            return (
+              <motion.div
+                key={index}
+                ref={imageRef}
+                initial={{ y: 20 }}
+                animate={isImageInView ? { y: 0 } : { y: 20 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="aspect-video bg-gray-800 rounded-lg overflow-hidden relative group cursor-pointer"
+                onClick={() => openViewer(index)}
+              >
+                <Image 
+                  src={image.imageUrl}
+                  alt={`${project?.name} - Imagen ${index + 1}`}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-110"
+                  quality={75}
+                />
+                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+      
+      {/* Visor de imágenes */}
+      <ImageViewer 
+        isOpen={viewerOpen}
+        images={galleryImages}
+        currentIndex={currentImageIndex}
+        onClose={closeViewer}
+        onPrev={goToPrevImage}
+        onNext={goToNextImage}
+        project={project}
+      />
+    </>
   );
 };
 

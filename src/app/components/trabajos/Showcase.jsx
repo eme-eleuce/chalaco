@@ -263,7 +263,7 @@ const Showcase = () => {
     <section className="min-h-screen py-16 bg-[#0a0a0a]">
       <div className="container mx-auto px-4">
         <motion.h2 
-          className="text-6xl md:text-8xl xl:text-9xl 2xl:text-[12rem] font-black text-white mb-20 text-center tracking-tight leading-none"
+          className="mt-10 text-6xl md:text-8xl xl:text-9xl 2xl:text-[12rem] font-black text-white mb-20 text-center tracking-tight leading-none"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
