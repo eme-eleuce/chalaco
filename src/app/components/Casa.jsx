@@ -5,6 +5,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, useInView } from 'framer-motion';
+import RotatingText from './RotatingText';
+import './RotatingText.css';
 import { supabase, BUCKET_NAME, SUPABASE_URL } from '../utils/supabase';
 import { getOptimizedImageUrl, generateSupabaseImageSrcSet, getBlurDataUrl } from '../utils/imageUtils';
 
@@ -177,27 +179,6 @@ const Banner = () => {
 
   return (
     <>
-    <section className="min-h-screen w-full flex items-center justify-center bg-green-500 text-[#0a0a0a]">
-      <div className="w-full max-w-[2000px] px-6 sm:px-8 md:px-12 lg:px-16 xl:px-24 pt-4 pb-8 md:py-20">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-12">
-          <div className="w-full md:w-1/2 text-center md:text-left">
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl 2xl:text-[10rem] font-bold tracking-wider leading-tight">
-              ¡SOMOS CHALACO FILMS!
-            </h1>
-          </div>
-          <div className="w-full md:w-1/2">
-            <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl leading-relaxed mb-8">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-            </p>
-            <button
-              className="px-12 py-6 text-3xl sm:text-4xl font-bold bg-[#0a0a0a] text-white rounded-xl shadow-[6px_6px_0px_0px_rgba(0,0,0,0.3)] transition-all hover:translate-y-[3px] hover:translate-x-[3px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] active:translate-y-[6px] active:translate-x-[6px] active:shadow-none"
-            >
-              SERVICIOS
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
 
     {/* Sección de Trabajos */}
     <section className="min-h-screen w-full bg-[#0a0a0a] text-white py-16 px-6 sm:px-8 md:px-12 lg:px-16 xl:px-16" ref={trabajosRef}>

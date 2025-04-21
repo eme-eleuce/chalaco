@@ -32,11 +32,11 @@ export default function Hero() {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden">
+    <div className="relative w-full h-screen overflow-hidden">
       {/* Video de fondo */}
       <video
         key={videos[currentVideo]} // Key para forzar la recarga del video
-        className="absolute top-0 left-0 w-full h-full object-cover"
+        className="absolute top-0 left-0 w-full h-full object-cover max-w-full"
         autoPlay
         muted
         onEnded={handleVideoEnd}

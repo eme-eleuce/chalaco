@@ -304,7 +304,7 @@ const WorkDetails = ({ projectId }) => {
 
         {/* Sección de video - Solo para Comerciales, Videoclips o Institucional */}
         {(project?.category === 'Comerciales' || project?.category === 'Videoclips' || project?.category === 'Institucional') && (
-          <VideoSection />
+          <VideoSection project={project} />
         )}
 
         {/* Galería de imágenes */}
@@ -419,10 +419,46 @@ const ProjectInfoSection = ({ project }) => {
   );
 };
 
+// Función para extraer el ID de video de YouTube de una URL
+const getYoutubeVideoId = (url) => {
+  if (!url) return null;
+  
+  // Patrones comunes de URLs de YouTube
+  const patterns = [
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/i,  // youtube.com/watch?v=XXXX
+    /(?:https?:\/\/)?(?:www\.)?youtu\.be\/([^?]+)/i,               // youtu.be/XXXX
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?]+)/i      // youtube.com/embed/XXXX
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  
+  return null;
+};
+
 // Componente para la sección de video con animación basada en scroll
-const VideoSection = () => {
+const VideoSection = ({ project }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, amount: 0.3 });
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Extraer el ID del video de YouTube del enlace del proyecto
+  const videoId = project?.link ? getYoutubeVideoId(project.link) : null;
+  
+  // Efecto para simular carga del iframe
+  useEffect(() => {
+    if (videoId) {
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [videoId]);
   
   return (
     <motion.div 
@@ -433,8 +469,29 @@ const VideoSection = () => {
       transition={{ duration: 0.7, ease: "easeOut" }}
     >
       <h2 className="text-3xl md:text-5xl font-black italic text-white tracking-wide mb-6">Video</h2>
-      <div className="mx-auto aspect-video w-full md:w-4/5 lg:w-3/4 xl:w-2/3 bg-gray-800/50 rounded-xl flex items-center justify-center">
-        <p className="text-xl text-gray-300">Video disponible proximamente</p>
+      <div className="mx-auto aspect-video w-full md:w-4/5 lg:w-3/4 xl:w-2/3 bg-gray-800/50 rounded-xl overflow-hidden">
+        {videoId ? (
+          <>
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-800/80 z-10">
+                <div className="w-16 h-16 border-4 border-gray-600 border-t-green-500 rounded-full animate-spin"></div>
+              </div>
+            )}
+            <iframe
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              onLoad={() => setIsLoading(false)}
+            ></iframe>
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <p className="text-xl text-gray-300">Video disponible próximamente</p>
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -515,9 +572,9 @@ const ImageViewer = ({ isOpen, images, currentIndex, onClose, onPrev, onNext, pr
           }}
           className="absolute left-4 top-1/2 -translate-y-1/2 z-50 text-white text-5xl hover:text-green-500 transition-colors"
           aria-label="Imagen anterior"
-          disabled={currentIndex === 0}
+
         >
-          <IoChevronBackOutline className={currentIndex === 0 ? 'opacity-50' : 'opacity-100'} />
+          <IoChevronBackOutline />
         </button>
         
         {/* Botón siguiente */}
@@ -528,9 +585,9 @@ const ImageViewer = ({ isOpen, images, currentIndex, onClose, onPrev, onNext, pr
           }}
           className="absolute right-4 top-1/2 -translate-y-1/2 z-50 text-white text-5xl hover:text-green-500 transition-colors"
           aria-label="Imagen siguiente"
-          disabled={currentIndex === images.length - 1}
+
         >
-          <IoChevronForwardOutline className={currentIndex === images.length - 1 ? 'opacity-50' : 'opacity-100'} />
+          <IoChevronForwardOutline />
         </button>
         
         {/* Contador de imágenes */}
@@ -577,12 +634,18 @@ const GallerySection = ({ project, galleryImages }) => {
   const goToPrevImage = () => {
     if (currentImageIndex > 0) {
       setCurrentImageIndex(currentImageIndex - 1);
+    } else {
+      // Si estamos en la primera imagen, ir a la última (navegación circular)
+      setCurrentImageIndex(galleryImages.length - 1);
     }
   };
   
   const goToNextImage = () => {
     if (currentImageIndex < galleryImages.length - 1) {
       setCurrentImageIndex(currentImageIndex + 1);
+    } else {
+      // Si estamos en la última imagen, volver a la primera (navegación circular)
+      setCurrentImageIndex(0);
     }
   };
   

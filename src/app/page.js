@@ -1,5 +1,6 @@
 import Head from "next/head";
 import Hero from "./components/Hero.jsx";
+import Banner from "./components/Banner.jsx";
 import Casa from "./components/Casa.jsx";
 
 export default function Home() {
@@ -14,6 +15,7 @@ export default function Home() {
          sizes="32x32"/>
       </Head>
       <Hero />
+      <Banner />
       <Casa />
     </div>
   );

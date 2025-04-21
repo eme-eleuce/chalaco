@@ -23,11 +23,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body
-        className={`antialiased overflow-x-hidden bg-white`}
-      >
+      <body className={`antialiased bg-white`}>
         {/* Aplicamos la fuente bebas solo al contenedor principal, permitiendo usar roboto en párrafos */}
-        <div className={`${bebas.className} flex flex-col min-h-screen w-full relative`}>
+        <div className={`${bebas.className} flex flex-col min-h-screen relative`}>
           <Navbar />
           <main className="flex-1">
             {children}
