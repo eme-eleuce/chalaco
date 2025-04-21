@@ -50,7 +50,7 @@ const Banner = () => {
               <span>Somos una productora audiovisual con más de 10 años de trayectoria, especializada en producción audiovisual{" "}</span>
               <RotatingText
                 texts={['publicitaria', 'cinematográfica', 'corporativa', 'documental', 'creativa']}
-                mainClassName="text-white inline-flex bg-[#0a0a0a] px-3 py-1 rounded-md text-3xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-5xl"
+                mainClassName="text-white inline-flex bg-[#0a0a0a] px-3 py-[0.1rem] rounded-md text-3xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-5xl"
                 staggerFrom="last"
                 initial={{ y: "100%", rotate: -5, scale: 0.9 }}
                 animate={{ y: 0, rotate: 0, scale: 1 }}
@@ -59,7 +59,7 @@ const Banner = () => {
                 splitLevelClassName="overflow-hidden"
                 elementLevelClassName="transition-colors duration-150"
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                rotationInterval={2500}
+                rotationInterval={1600}
                 splitBy="words"
               />
               <span></span>

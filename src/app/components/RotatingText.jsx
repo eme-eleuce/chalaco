@@ -166,7 +166,7 @@ const RotatingText = forwardRef((props, ref) => {
       transition={{ ...transition, layout: { duration: 0.5, ease: "easeInOut" } }}
       initial={{ backgroundColor: "#0a0a0a", borderRadius: "0.375rem" }}
       animate={{ backgroundColor: "#0a0a0a", borderRadius: "0.375rem" }}
-      style={{ minWidth: "2rem", minHeight: "1.5rem" }}
+      style={{ minWidth: "2rem", minHeight: "1.5rem", display: "inline-flex", alignItems: "center" }}
     >
       <span className="sr-only">{texts[currentTextIndex]}</span>
       <AnimatePresence mode={animatePresenceMode} initial={animatePresenceInitial}>

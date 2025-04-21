@@ -66,7 +66,7 @@ const getImageData = async (folder) => {
         return imageData;
       }
     } catch (error) {
-      console.log(`Error checking ${ext} image:`, error);
+      // Error silencioso al verificar la imagen
     }
   }
   
@@ -109,11 +109,6 @@ const Banner = () => {
     const fetchProjects = async () => {
       setLoading(true);
       try {
-        console.log('Fetching from page table...');
-        console.log('Supabase URL:', SUPABASE_URL);
-        console.log('Bucket name:', BUCKET_NAME);
-        
-        console.log('Supabase client:', supabase);
         
         // Generar 5 números aleatorios únicos entre 1 y 26
         const randomIds = Array.from({ length: 26 }, (_, i) => i + 1)
@@ -125,18 +120,11 @@ const Banner = () => {
           .select('*')
           .in('id', randomIds);
 
-        console.log('Raw response:', { projectsData, projectsError });
-
         if (projectsError) {
-          console.log('Error details:', {
-            message: projectsError.message,
-            details: projectsError.details,
-            hint: projectsError.hint
-          });
           throw projectsError;
         }
 
-        console.log('Projects data:', projectsData);
+      
 
         if (!projectsData || projectsData.length === 0) {
           setError('No se encontraron proyectos en la base de datos');
@@ -167,7 +155,6 @@ const Banner = () => {
         // Actualizar con todos los proyectos
         setProjects([...mainProjects, ...remainingProjects]);
       } catch (error) {
-        console.error('Error in fetchProjects:', error);
         setError(error.message);
       } finally {
         setLoading(false);

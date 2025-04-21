@@ -37,7 +37,7 @@ const getImageData = async (folder, imageName = 'image1') => {
         return imageData;
       }
     } catch (error) {
-      console.log(`Error checking ${ext} image:`, error);
+      // Error silencioso al verificar la imagen
     }
   }
   
@@ -82,10 +82,9 @@ const getAllImagesInFolder = async (folder) => {
     const results = await Promise.all(imagePromises);
     const imageFiles = results.filter(Boolean);
     
-    console.log('Imágenes encontradas:', imageFiles);
     return imageFiles;
   } catch (error) {
-    console.error('Error en getAllImagesInFolder:', error);
+    // Error silencioso al buscar imágenes en la carpeta
     return [];
   }
 };
@@ -99,19 +98,16 @@ const WorkDetails = ({ projectId }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log('WorkDetails montado con projectId:', projectId);
     
     const fetchProjectDetails = async () => {
       try {
         setLoading(true);
-        console.log('Intentando obtener proyecto con ID:', projectId);
         
         // Verificar que el ID es válido
         if (!projectId) {
           throw new Error('ID de proyecto no válido');
         }
         
-        console.log('Tipo de projectId:', typeof projectId);
         
         // Intentar con ambas formas: string y número
         let projectData = null;
@@ -137,12 +133,6 @@ const WorkDetails = ({ projectId }) => {
           .select('*')
           .eq('id', String(projectId))
           .single();
-          
-        console.log('Respuestas de Supabase:', { 
-          original: result1,
-          comoNumero: result2,
-          comoString: result3
-        });
         
         // Usar el primer resultado exitoso
         if (result1.data) {
@@ -156,7 +146,6 @@ const WorkDetails = ({ projectId }) => {
           projectError = result1.error || result2.error || result3.error;
         }
         
-        console.log('Proyecto datos procesados:', projectData);
 
         if (projectError) {
           throw new Error(`Error al obtener proyecto: ${projectError.message}`);
@@ -183,12 +172,6 @@ const WorkDetails = ({ projectId }) => {
             };
           })
         );
-
-        console.log('Datos procesados:', { 
-          project: projectData,
-          mainImage: mainImageData,
-          galleryImages: galleryImagesData 
-        });
         
         // Asegurarse de que projectData es un objeto, no un array
         const projectObj = Array.isArray(projectData) ? projectData[0] : projectData;
@@ -286,7 +269,6 @@ const WorkDetails = ({ projectId }) => {
     );
   }
 
-  console.log('Renderizando con estado:', { project, mainImage, galleryImages });
   
   return (
     <motion.div 
@@ -360,7 +342,7 @@ const MainImageSection = ({ mainImage, project }) => {
           loading="eager"
           placeholder="blur"
           blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxODE4MTgiLz48L3N2Zz4="
-          onLoadingComplete={() => setIsLoading(false)}
+          onLoad={() => setIsLoading(false)}
         />
       </div>
     </motion.div>

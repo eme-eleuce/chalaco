@@ -33,7 +33,7 @@ const getImageData = async (folder) => {
         return imageData;
       }
     } catch (error) {
-      console.log(`Error checking ${ext} image:`, error);
+      // Error silencioso al verificar la imagen
     }
   }
   
@@ -110,7 +110,6 @@ const Showcase = () => {
         // Calcular el total de páginas basado en todos los proyectos
         const totalProjects = allProjects.length;
         const calculatedTotalPages = Math.ceil(totalProjects / projectsPerPage);
-        console.log('Pagination info:', { totalProjects, calculatedTotalPages, currentPage });
         setTotalPages(calculatedTotalPages);
 
         // Obtener solo los proyectos de la página actual
@@ -133,7 +132,6 @@ const Showcase = () => {
 
         setProjects(projectsWithImages);
       } catch (error) {
-        console.error('Error en fetchProjects:', error);
         setError(error.message || 'Hubo un error al cargar los proyectos');
         setProjects([]); // Limpiar proyectos en caso de error
       } finally {
