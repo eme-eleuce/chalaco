@@ -337,7 +337,7 @@ const Showcase = () => {
                               quality={75}
                               priority={index < 3} // Priorizar carga de las primeras 3 imágenes
                             />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
+                            {/* Se eliminó el overlay de fondo negro en hover */}
                           </div>
                           <div className="space-y-2 px-1 group">
                             <h3 className="text-2xl md:text-3xl font-black italic text-white tracking-wide leading-tight group-hover:text-green-500 transition-colors">{project.name}</h3>

@@ -2,11 +2,13 @@
 
 import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { FaInstagram, FaEnvelope } from 'react-icons/fa';
+import { FaInstagram, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
 
 const Contact = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: false, amount: 0.3 });
+  // Cambiamos 'once: false' a 'once: true' para que la animación solo ocurra una vez
+  // y los elementos permanezcan visibles después de aparecer
+  const isInView = useInView(ref, { once: true, amount: 0.3 });
   
   return (
     <div className="min-h-screen pt-24 md:pt-32 pb-20 bg-[#0a0a0a] text-white">
@@ -29,38 +31,54 @@ const Contact = () => {
         
         {/* Iconos de contacto */}
         <motion.div 
-          className="flex flex-col md:flex-row items-center justify-center md:justify-evenly space-y-12 md:space-y-0 md:space-x-8 mt-16"
+          className="flex flex-col items-center justify-center space-y-16 mt-16"
           initial={{ opacity: 0, y: 50 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
         >
-          {/* Instagram */}
-          <a 
-            href="https://www.instagram.com/chalacofilms/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex flex-col md:flex-row items-center md:items-start group md:w-1/3 lg:w-2/5"
-          >
-            <div className="md:mr-8">
-              <FaInstagram className="text-7xl md:text-8xl text-white group-hover:text-green-500 transition-colors duration-300" />
-            </div>
-            <span className="mt-4 md:mt-6 text-2xl md:text-3xl lg:text-4xl font-medium group-hover:text-green-500 transition-colors duration-300">
-              @chalacofilms
+          {/* Dirección */}
+          <div className="w-full max-w-3xl text-center">
+            <span className="block text-2xl md:text-3xl lg:text-4xl font-medium mb-4 text-green-500">
+              Dirección
             </span>
-          </a>
+            <span className="block text-2xl md:text-3xl max-w-3xl">
+              Calle José Maria Egas y Av. Francisco de Orellana
+            </span>
+            <span className="block text-2xl md:text-3xl max-w-3xl">
+              Guayaquil, Ecuador
+            </span>
+          </div>
           
-          {/* Correo electrónico */}
-          <a 
-            href="mailto:info@chalacofilms.com" 
-            className="flex flex-col md:flex-row items-center md:items-start group md:w-1/3 lg:w-2/5"
-          >
-            <div className="md:mr-8">
-              <FaEnvelope className="text-7xl md:text-8xl text-white group-hover:text-green-500 transition-colors duration-300" />
-            </div>
-            <span className="mt-4 md:mt-6 text-2xl md:text-3xl lg:text-4xl font-medium group-hover:text-green-500 transition-colors duration-300">
-              info@chalacofilms.com
-            </span>
-          </a>
+          {/* Contenedor para Instagram y Correo en desktop */}
+          <div className="w-full flex flex-col md:flex-row md:justify-center md:space-x-16 md:space-y-0 space-y-16">
+            {/* Instagram */}
+            <a 
+              href="https://www.instagram.com/chalacofilms/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex flex-col md:flex-row items-center md:items-start group"
+            >
+              <div className="md:mr-8 mb-4 md:mb-0">
+                <FaInstagram className="text-7xl md:text-8xl text-white group-hover:text-green-500 transition-colors duration-300" />
+              </div>
+              <span className="mt-2 md:mt-6 text-2xl md:text-3xl lg:text-4xl font-medium group-hover:text-green-500 transition-colors duration-300">
+                @chalacofilms
+              </span>
+            </a>
+            
+            {/* Correo electrónico */}
+            <a 
+              href="mailto:info@chalacofilms.com" 
+              className="flex flex-col md:flex-row items-center md:items-start group"
+            >
+              <div className="md:mr-8 mb-4 md:mb-0">
+                <FaEnvelope className="text-7xl md:text-8xl text-white group-hover:text-green-500 transition-colors duration-300" />
+              </div>
+              <span className="mt-2 md:mt-6 text-2xl md:text-3xl lg:text-4xl font-medium group-hover:text-green-500 transition-colors duration-300">
+                info@chalacofilms.com
+              </span>
+            </a>
+          </div>
         </motion.div>
       </div>
     </div>

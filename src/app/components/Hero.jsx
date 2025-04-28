@@ -4,18 +4,8 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 export default function Hero() {
-  const [currentVideo, setCurrentVideo] = useState(0);
   const [showLogo, setShowLogo] = useState(true);
   
-  // Lista de videos en el orden que quieres que se reproduzcan
-  const videos = [
-    '3.mp4',
-    '5.mp4',
-    '1.mp4',
-    '2.mp4',
-    // Agrega más videos aquí
-  ];
-
   // Efecto para manejar la carga inicial
   useEffect(() => {
     // Ocultar el logo después de un tiempo para mostrar el video
@@ -26,23 +16,17 @@ export default function Hero() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Cambiar al siguiente video cuando termine el actual
-  const handleVideoEnd = () => {
-    setCurrentVideo(prev => (prev + 1) % videos.length);
-  };
-
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Video de fondo */}
       <video
-        key={videos[currentVideo]} // Key para forzar la recarga del video
         className="absolute top-0 left-0 w-full h-full object-cover max-w-full"
         autoPlay
         muted
-        onEnded={handleVideoEnd}
+        loop
         playsInline // Mejor soporte en iOS
       >
-        <source src={`/videos/${videos[currentVideo]}`} type="video/mp4" />
+        <source src="/videos/herohero.mp4" type="video/mp4" />
       </video>
 
       {/* Logo durante la carga inicial - sobrepuesto a todo incluyendo navbar */}

@@ -2,7 +2,6 @@
 const nextConfig = {
   // Configuración para imágenes
   images: {
-    domains: ['bsrvywfejjtrrcobljvv.supabase.co'],
     remotePatterns: [
       {
         protocol: 'https',
