@@ -16,34 +16,41 @@ const roboto = Roboto({
 });
 
 export const metadata = {
+  title: 'Chalaco Films | Productora Audiovisual',
+  description: 'Somos una productora audiovisual de Guayaquil especializada en cine, publicidad, documentales y fotografía. Creamos contenido de alta calidad con un enfoque creativo y profesional.',
+  keywords: 'productora audiovisual, cine, publicidad, documentales, fotografía, producción de video, Ecuador, Guayaquil, Chalaco Films, videoclips, livestream, post-producción',
   metadataBase: new URL('https://chalacofilms.com'),
-  title: "Chalaco Films | Productora Audiovisual",
-  description: "Somos una productora audiovisual de Guayaquil especializada en cine, publicidad, documentales y fotografía. Creamos contenido de alta calidad con un enfoque creativo y profesional.",
-  keywords: "productora audiovisual, cine, publicidad, documentales, fotografía, producción de video, Ecuador, Guayaquil, Chalaco Films",
-  authors: [{ name: "Chalaco Films" }],
-  creator: "Chalaco Films",
-  publisher: "Chalaco Films",
+  alternates: {
+    canonical: '/',
+    languages: {
+      'es-EC': '/',
+    },
+  },
   openGraph: {
-    title: "Chalaco Films | Productora Audiovisual en Guayaquil, Ecuador",
-    description: "Somos una productora audiovisual de Guayaquil especializada en cine, publicidad, documentales y fotografía. Creamos contenido de alta calidad con un enfoque creativo y profesional.",
-    url: "https://chalacofilms.com",
-    siteName: "Chalaco Films",
+    title: 'Chalaco Films | Productora Audiovisual',
+    description: 'Somos una productora audiovisual especializada en cine, publicidad, documentales y fotografía. Creamos contenido de alta calidad con un enfoque creativo y profesional.',
+    type: 'website',
+    locale: 'es_EC',
+    url: '/',
+    siteName: 'Chalaco Films | Productora Audiovisual',
     images: [
       {
-        url: "/photos/logon.png",
-        width: 800,
-        height: 600,
-        alt: "Chalaco Films Logo",
+        url: '/photos/logob.png',
+        width: 1200,
+        height: 630,
+        alt: 'Chalaco Films | Productora Audiovisual',
       },
     ],
-    locale: "es_EC",
-    type: "website",
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Chalaco Films | Productora Audiovisual en Guayaquil, Ecuador",
-    description: "Somos una productora audiovisual de Guayaquil especializada en cine, publicidad, documentales y fotografía.",
-    images: ["/photos/logob.png"],
+    card: 'summary_large_image',
+    title: 'Chalaco Films | Productora Audiovisual',
+    description: 'Somos una productora audiovisual especializada en cine, publicidad, documentales y fotografía.',
+    creator: '@chalacofilms',
+    images: [{
+      url: '/photos/logob.png',
+      alt: 'Chalaco Films | Productora Audiovisual',
+    }],
   },
   robots: {
     index: true,
@@ -56,9 +63,9 @@ export const metadata = {
       'max-snippet': -1,
     },
   },
-  alternates: {
-    canonical: "https://chalacofilms.com",
-  },
+  authors: [{ name: 'Chalaco Films' }],
+  creator: 'Chalaco Films',
+  publisher: 'Chalaco Films',
 };
 
 export default function RootLayout({ children }) {
