@@ -10,7 +10,7 @@ html {
 
 /* Clase para aplicar la fuente Roboto a párrafos específicos */
 .roboto-font {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Noto Sans', sans-serif;
 }
 
 @keyframes heartbeat {

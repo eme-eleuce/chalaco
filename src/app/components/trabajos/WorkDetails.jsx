@@ -324,7 +324,7 @@ const MainImageSection = ({ mainImage, project }) => {
   return (
     <motion.div 
       ref={ref}
-      className="aspect-video w-full relative rounded-xl overflow-hidden bg-gray-800"
+      className="aspect-video w-full md:w-11/12 lg:w-10/12 mx-auto relative rounded-xl overflow-hidden bg-gray-800"
       initial={{ y: 30 }}
       animate={isInView ? { y: 0 } : { y: 30 }}
       transition={{ duration: 0.7, ease: "easeOut" }}
@@ -335,10 +335,10 @@ const MainImageSection = ({ mainImage, project }) => {
           src={mainImage.imageUrl}
           alt={project?.name || 'Imagen principal'}
           fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
-          className="object-contain md:object-cover scale-105"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 85vw, 75vw"
+          className="object-contain md:object-cover scale-100"
           priority={true}
-          quality={45}
+          quality={60}
           loading="eager"
           placeholder="blur"
           blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxODE4MTgiLz48L3N2Zz4="

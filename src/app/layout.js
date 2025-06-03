@@ -1,4 +1,4 @@
-import { Bebas_Neue, Roboto } from "next/font/google";
+import { Bebas_Neue, Noto_Sans } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -9,7 +9,7 @@ const bebas = Bebas_Neue({
   weight: '400',
 });
 
-const roboto = Roboto({
+const roboto = Noto_Sans({
   subsets: ["latin"],
   display: 'swap',
   weight: '700',
@@ -19,7 +19,7 @@ export const metadata = {
   title: 'Chalaco Films | Productora Audiovisual',
   description: 'Somos una productora audiovisual de Guayaquil especializada en cine, publicidad, documentales y fotografía. Creamos contenido de alta calidad con un enfoque creativo y profesional.',
   keywords: 'productora audiovisual, cine, publicidad, documentales, fotografía, producción de video, Ecuador, Guayaquil, Chalaco Films, videoclips, livestream, post-producción',
-  metadataBase: new URL('https://chalacofilms.com'),
+  metadataBase: new URL('https://www.chalacofilms.com'),
   alternates: {
     canonical: '/',
     languages: {
