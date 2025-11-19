@@ -22,6 +22,19 @@ export default function Footer() {
             <span className="text-[#0a0a0a] sm:text-lg font-bold tracking-wider">{currentYear}</span>
           </div>
 
+          {/* Creado por */}
+          <div className="text-[#0a0a0a] sm:text-base">
+            <span>desarrollado por </span>
+            <a
+              href="https://www.eme-eleuce.com/work/websites"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-white hover:underline"
+            >
+              luis eme
+            </a>
+          </div>
+
           {/* Redes sociales */}
           <div className="flex space-x-4">
             {socialLinks.map((link, index) => {
