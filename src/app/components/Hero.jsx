@@ -17,7 +17,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden">
+    <div className="sticky top-0 w-full h-screen overflow-hidden">
       {/* Video de fondo */}
       <video
         className="absolute top-0 left-0 w-full h-full object-cover max-w-full"

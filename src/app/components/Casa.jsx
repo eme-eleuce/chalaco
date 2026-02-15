@@ -168,7 +168,7 @@ const Banner = () => {
     <>
 
     {/* Sección de Trabajos */}
-    <section className="min-h-screen w-full bg-[#0a0a0a] text-white py-16 px-6 sm:px-8 md:px-12 lg:px-16 xl:px-16" ref={trabajosRef}>
+    <section className="relative z-10 min-h-screen w-full bg-[#0a0a0a] text-white py-16 px-6 sm:px-8 md:px-12 lg:px-16 xl:px-16" ref={trabajosRef}>
       <div className="max-w-[2000px] mx-auto">
         <motion.div 
           className="text-center mb-16"

@@ -1,51 +1,42 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { motion, useInView } from 'framer-motion';
+import { motion } from 'framer-motion';
 import RotatingText from './RotatingText';
 import './RotatingText.css';
 
 const Banner = () => {
-  // Referencias para detectar cuando los elementos están en el viewport
-  const sectionRef = useRef(null);
-  const titleRef = useRef(null);
-  const descriptionRef = useRef(null);
-  const buttonRef = useRef(null);
-  
-  // Estados de visibilidad para cada elemento
-  const isSectionInView = useInView(sectionRef, { once: false, amount: 0.2 });
-  const isTitleInView = useInView(titleRef, { once: false, amount: 0.5 });
-  const isDescriptionInView = useInView(descriptionRef, { once: false, amount: 0.3 });
-  const isButtonInView = useInView(buttonRef, { once: false, amount: 0.8 });
-  
   return (
     <section 
-      ref={sectionRef}
-      className="min-h-screen w-full flex items-center justify-center bg-green-500 text-[#0a0a0a] overflow-hidden"
+      className="relative z-10 min-h-screen w-full flex items-center justify-center bg-green-500 text-[#0a0a0a] overflow-hidden"
     >
       <div className="w-full max-w-[2000px] px-6 sm:px-8 md:px-12 lg:px-16 xl:px-24 pt-2 pb-4 md:py-12">
         <div className="flex flex-col md:flex-row justify-between items-center gap-15 md:gap-10">
+          {/* Título - Aparece desde la izquierda */}
           <motion.div 
-            ref={titleRef}
             className="w-full md:w-1/2 text-center md:text-left overflow-hidden"
-            initial={{ x: -50 }}
-            animate={isTitleInView ? { x: 0 } : { x: -50 }}
-            transition={{ duration: 0.7, ease: "easeOut" }}
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
             <h1 className="text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl 2xl:text-[10rem] font-bold tracking-wider leading-none mb-5 md:mb-0">
               ¡SOMOS CHALACO FILMS!
             </h1>
           </motion.div>
+          
+          {/* Contenido derecho - Aparece desde la derecha */}
           <motion.div 
             className="w-full md:w-1/2 overflow-hidden text-center md:text-left"
-            initial={{ x: 50 }}
-            animate={isDescriptionInView ? { x: 0 } : { x: 50 }}
-            transition={{ duration: 0.7, ease: "easeOut", delay: 0.2 }}
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
           >
             <motion.div 
-              ref={descriptionRef}
               className="text-3xl sm:text-3xl md:text-3xl lg:text-4xl xl:text-5xl leading-tight mb-8 md:mb-6 font-medium overflow-hidden"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
             >
               <span>Somos una productora audiovisual con más de 10 años de trayectoria, especializada en producción audiovisual{" "}</span>
               <RotatingText
@@ -66,19 +57,18 @@ const Banner = () => {
               
               <motion.div 
                 className="text-4xl sm:text-4xl md:text-4xl mt-4 md:mt-6 text-[#0a0a0a] overflow-hidden"
-                initial={{ y: 20 }}
-                animate={isDescriptionInView ? { y: 0 } : { y: 20 }}
-                transition={{ duration: 0.5, ease: "easeOut", delay: 0.4 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
               >
                 ¿Tienes un proyecto en mente?
               </motion.div>
             </motion.div>
             <motion.div
-              ref={buttonRef}
               className="overflow-visible mb-3 md:mb-6 pb-1 md:pb-2 flex justify-center md:justify-start"
-              initial={{ y: 30 }}
-              animate={isButtonInView ? { y: 0 } : { y: 30 }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.6 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
             >
               <Link href="/contacto">
                 <button
