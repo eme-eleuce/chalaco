@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -13,17 +14,24 @@ import { getOptimizedImageUrl, generateSupabaseImageSrcSet } from '../../utils/i
 // Cache de URLs y blur data
 const urlCache = new Map();
 
+const publicImageUrl = (folder, fileName) =>
+  `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/${fileName}`;
+
+const getCoverUrls = (folder) => ({
+  imageUrl: getOptimizedImageUrl(publicImageUrl(folder, 'image1.jpg')),
+  thumbUrl: getOptimizedImageUrl(publicImageUrl(folder, 'image1_thumb.jpg')),
+  srcSet: generateSupabaseImageSrcSet(publicImageUrl(folder, 'image1.jpg')),
+});
+
 const getImageData = async (folder, imageName = 'image1') => {
-  // Revisar si los datos están en caché
   const cacheKey = `${folder}/${imageName}`;
   if (urlCache.has(cacheKey)) {
     return urlCache.get(cacheKey);
   }
 
-  const extensions = ['png', 'jpg'];
-  
-  for (const ext of extensions) {
-    const url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/${imageName}.${ext}`;
+  // Migración: todo está en .jpg; solo hacemos fallback a .png si hace falta
+  for (const ext of ['jpg', 'png']) {
+    const url = publicImageUrl(folder, `${imageName}.${ext}`);
     try {
       const response = await fetch(url, { method: 'HEAD' });
       if (response.ok) {
@@ -32,7 +40,6 @@ const getImageData = async (folder, imageName = 'image1') => {
           imageUrl,
           srcSet: generateSupabaseImageSrcSet(imageUrl)
         };
-        // Guardar en caché
         urlCache.set(cacheKey, imageData);
         return imageData;
       }
@@ -40,51 +47,39 @@ const getImageData = async (folder, imageName = 'image1') => {
       // Error silencioso al verificar la imagen
     }
   }
-  
-  // Si no se encuentra ninguna imagen, usar fallback
-  const fallbackUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/${imageName}.png`;
+
+  const fallbackUrl = publicImageUrl(folder, `${imageName}.jpg`);
   const imageUrl = getOptimizedImageUrl(fallbackUrl);
   const imageData = {
     imageUrl,
     srcSet: generateSupabaseImageSrcSet(imageUrl)
   };
-  // Guardar en caché
   urlCache.set(cacheKey, imageData);
   return imageData;
 };
 
 const getAllImagesInFolder = async (folder) => {
   try {
-    // En lugar de intentar listar todos los archivos del folder (que puede estar dando error),
-    // probaremos un enfoque alternativo con nombres de archivos predecibles
-    
-    // Generamos un arreglo con posibles nombres de imagen (image1, image2, etc.)
     const possibleImages = Array.from({ length: 10 }, (_, i) => `image${i + 1}`);
-    
-    // Para cada posible nombre, verificamos si existe en ambas extensiones
-    const imagePromises = possibleImages.flatMap(imageName => {
-      return ['png', 'jpg'].map(async ext => {
+
+    const imagePromises = possibleImages.map(async (imageName) => {
+      for (const ext of ['jpg', 'png']) {
         try {
-          const url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/${imageName}.${ext}`;
+          const url = publicImageUrl(folder, `${imageName}.${ext}`);
           const response = await fetch(url, { method: 'HEAD' });
-          
           if (response.ok) {
-            return { name: `${imageName}`, extension: ext };
+            return { name: imageName, extension: ext };
           }
-          return null;
         } catch (e) {
-          return null;
+          // continue
         }
-      });
+      }
+      return null;
     });
-    
-    // Resolvemos todas las promesas y filtramos los nulos
+
     const results = await Promise.all(imagePromises);
-    const imageFiles = results.filter(Boolean);
-    
-    return imageFiles;
+    return results.filter(Boolean);
   } catch (error) {
-    // Error silencioso al buscar imágenes en la carpeta
     return [];
   }
 };
@@ -98,54 +93,21 @@ const WorkDetails = ({ projectId }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    
     const fetchProjectDetails = async () => {
       try {
         setLoading(true);
-        
-        // Verificar que el ID es válido
+        setGalleryImages([]);
+
         if (!projectId) {
           throw new Error('ID de proyecto no válido');
         }
-        
-        
-        // Intentar con ambas formas: string y número
-        let projectData = null;
-        let projectError = null;
-        
-        // Intento 1: Como está
-        const result1 = await supabase
+
+        const id = parseInt(projectId, 10);
+        const { data: projectData, error: projectError } = await supabase
           .from('page')
           .select('*')
-          .eq('id', projectId)
+          .eq('id', Number.isNaN(id) ? projectId : id)
           .single();
-        
-        // Intento 2: Como número
-        const result2 = await supabase
-          .from('page')
-          .select('*')
-          .eq('id', parseInt(projectId))
-          .single();
-        
-        // Intento 3: Como string
-        const result3 = await supabase
-          .from('page')
-          .select('*')
-          .eq('id', String(projectId))
-          .single();
-        
-        // Usar el primer resultado exitoso
-        if (result1.data) {
-          projectData = Array.isArray(result1.data) ? result1.data[0] : result1.data;
-        } else if (result2.data) {
-          projectData = Array.isArray(result2.data) ? result2.data[0] : result2.data;
-        } else if (result3.data) {
-          projectData = Array.isArray(result3.data) ? result3.data[0] : result3.data;
-        } else {
-          // Si ninguno funciona, usar el primer error
-          projectError = result1.error || result2.error || result3.error;
-        }
-        
 
         if (projectError) {
           throw new Error(`Error al obtener proyecto: ${projectError.message}`);
@@ -155,34 +117,30 @@ const WorkDetails = ({ projectId }) => {
           throw new Error('No se encontró el proyecto');
         }
 
-        // Obtener imagen principal
-        const mainImageData = await getImageData(projectData.storage_folder, 'image1');
+        const projectObj = Array.isArray(projectData) ? projectData[0] : projectData;
+        const cover = getCoverUrls(projectObj.storage_folder);
 
-        // Obtener lista de todas las imágenes disponibles
-        const imagesList = await getAllImagesInFolder(projectData.storage_folder);
-        
-        // Procesar todas las imágenes para la galería
+        // Mostrar hero + datos de inmediato (sin HEAD ni esperar galería)
+        setProject(projectObj);
+        setMainImage(cover);
+        setLoading(false);
+        setInitialLoad(false);
+
+        // Galería en segundo plano
+        const imagesList = await getAllImagesInFolder(projectObj.storage_folder);
         const galleryImagesData = await Promise.all(
           imagesList.map(async (imageFile) => {
-            const imageName = imageFile.name; // Ya no necesitamos split porque ya tenemos solo el nombre sin extensión
-            const imageData = await getImageData(projectData.storage_folder, imageName);
+            const imageData = await getImageData(projectObj.storage_folder, imageFile.name);
             return {
-              name: imageName,
+              name: imageFile.name,
               ...imageData
             };
           })
         );
-        
-        // Asegurarse de que projectData es un objeto, no un array
-        const projectObj = Array.isArray(projectData) ? projectData[0] : projectData;
-        
-        setProject(projectObj);
-        setMainImage(mainImageData);
         setGalleryImages(galleryImagesData);
       } catch (error) {
         console.error('Error en fetchProjectDetails:', error);
         setError(error.message || 'Hubo un error al cargar los detalles del proyecto');
-      } finally {
         setLoading(false);
         setInitialLoad(false);
       }
@@ -271,133 +229,168 @@ const WorkDetails = ({ projectId }) => {
 
   
   return (
-    <motion.div 
-      className="min-h-screen pt-30 md:py-12 bg-[#0a0a0a] text-white"
-    >
-      <motion.div 
-        className="container mx-auto px-4 space-y-12"
-      >
-        {mainImage && (
-          <MainImageSection mainImage={mainImage} project={project} />
-        )}
+    <div className="bg-[#0a0a0a] text-white">
+      {mainImage && (
+        <ProjectHeroParallax mainImage={mainImage} project={project} />
+      )}
 
-        {/* Información del proyecto - Estructura en dos columnas */}
-        <ProjectInfoSection project={project} />
+      <ProjectDetailsSection project={project} />
 
-        {/* Sección de video - Solo para Comerciales, Videoclips o Institucional */}
+      <div className="relative z-10 bg-[#0a0a0a] w-full px-6 sm:px-8 md:px-12 lg:px-16 pb-4">
         {(project?.category === 'Comerciales' || project?.category === 'Videoclips' || project?.category === 'Institucional') && (
           <VideoSection project={project} />
         )}
 
-        {/* Galería de imágenes */}
         <GallerySection project={project} galleryImages={galleryImages} />
-        
-        {/* Botón Volver */}
         <BackButtonSection />
-      </motion.div>
-    </motion.div>
-  );
-};
-
-// Componente de skeleton para la imagen principal
-const MainImageSkeleton = () => (
-  <div className="absolute inset-0 bg-gray-800 animate-pulse flex items-center justify-center">
-    <div className="w-20 h-20 border-4 border-gray-600 border-t-green-500 rounded-full animate-spin"></div>
-  </div>
-);
-
-// Componente para la imagen principal con animación basada en scroll
-const MainImageSection = ({ mainImage, project }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: false, amount: 0.3 });
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Precarga de la imagen usando una técnica compatible con Next.js
-  useEffect(() => {
-    // Usamos el objeto global window para acceder al constructor Image nativo del navegador
-    if (typeof window !== 'undefined') {
-      const img = new window.Image();
-      img.src = mainImage.imageUrl;
-    }
-  }, [mainImage.imageUrl]);
-  
-  return (
-    <motion.div 
-      ref={ref}
-      className="aspect-video w-full md:w-11/12 lg:w-10/12 mx-auto relative rounded-xl overflow-hidden bg-gray-800"
-      initial={{ y: 30 }}
-      animate={isInView ? { y: 0 } : { y: 30 }}
-      transition={{ duration: 0.7, ease: "easeOut" }}
-    >
-      <div className="absolute inset-0 flex items-center justify-center">
-        {isLoading && <MainImageSkeleton />}
-        <Image 
-          src={mainImage.imageUrl}
-          alt={project?.name || 'Imagen principal'}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 85vw, 75vw"
-          className="object-contain md:object-cover scale-100"
-          priority={true}
-          quality={60}
-          loading="eager"
-          placeholder="blur"
-          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMxODE4MTgiLz48L3N2Zz4="
-          onLoad={() => setIsLoading(false)}
-        />
       </div>
-    </motion.div>
+    </div>
   );
 };
 
-// Componente para la información del proyecto con animación basada en scroll
-const ProjectInfoSection = ({ project }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: false, amount: 0.3 });
-  
+// Solo imagen sticky — el título vive únicamente en el bloque de scroll
+const ProjectHeroParallax = ({ mainImage, project }) => {
+  const [fullLoaded, setFullLoaded] = useState(false);
+
+  useEffect(() => {
+    setFullLoaded(false);
+  }, [mainImage.imageUrl]);
+
   return (
-    <motion.div 
-      ref={ref}
-      className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-0 px-2 md:px-18"
+    <div className="sticky top-0 w-full h-screen overflow-hidden bg-gray-900">
+      {mainImage.thumbUrl && (
+        <Image
+          src={mainImage.thumbUrl}
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority
+          quality={60}
+        />
+      )}
+      <Image
+        src={mainImage.imageUrl}
+        alt={project?.name || 'Imagen principal'}
+        fill
+        sizes="100vw"
+        className={`object-cover transition-opacity duration-700 ${fullLoaded ? 'opacity-100' : 'opacity-0'}`}
+        priority
+        quality={80}
+        onLoad={() => setFullLoaded(true)}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-black/25" />
+    </div>
+  );
+};
+
+const ProjectDetailsSection = ({ project }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.12 });
+  const paragraphs = (project?.description || '')
+    .split('\n')
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const renderClient = (className = '') => (
+    <motion.p
+      className={`roboto-font text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold ${className}`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+      transition={{ duration: 0.55, delay: 0.15, ease: 'easeOut' }}
     >
-      {/* Columna izquierda: name y year */}
-      <motion.div 
-        className="space-y-4 text-center md:text-left md:pr-0"
-        initial={{ x: -20 }}
-        animate={isInView ? { x: 0 } : { x: -20 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
+      <span className="text-white/90">Cliente:</span>{' '}
+      <span className="text-green-500">{project?.client}</span>
+    </motion.p>
+  );
+
+  return (
+    <section
+      ref={ref}
+      className="relative z-10 w-full -mt-[78vh] md:-mt-[28vh] lg:-mt-[24vh]"
+    >
+      <div
+        className="px-5 sm:px-8 md:px-12 lg:px-16 xl:px-24 pt-0 md:pt-8 lg:pt-10 pb-10 md:pb-12"
+        style={{
+          background:
+            'linear-gradient(to bottom, rgba(10,10,10,0) 0%, rgba(10,10,10,0.2) 28%, rgba(10,10,10,0.75) 55%, #0a0a0a 72%, #0a0a0a 100%)',
+        }}
       >
-        <h1 className="text-5xl md:text-6xl font-black italic text-white tracking-wide leading-tight">
-          {project?.name}
-        </h1>
-        <div className="w-20 h-1 bg-white mx-auto md:mx-0"></div>
-        <p className="roboto-font text-xl md:text-2xl lg:text-3xl text-white font-medium flex items-center justify-center md:justify-start">
-          {project?.year && project?.year.trim() !== '' ? (
-            <>
-              {project.year} <span className="opacity-75 mx-3 text-lg">-</span>
-            </>
-          ) : null}
-          <span className="text-green-500">{project?.category}</span>
-        </p>
-      </motion.div>
-      
-      {/* Columna derecha: client y description */}
-      <motion.div 
-        className="space-y-4 lg:mt-10 md:pl-0"
-        initial={{ x: 20 }}
-        animate={isInView ? { x: 0 } : { x: 20 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-      >
-        <h2 className="roboto-font text-3xl md:text-4xl font-bold">
-          <span className="text-white">Cliente:</span> <span className="text-green-500"> {project?.client}</span>
-        </h2>
-        <div className="w-20 h-1 bg-white"></div>
-        <div className="text-xl md:text-2xl lg:text-2xl text-white roboto-font leading-relaxed  space-y-6 text-justify ">
-          {project?.description?.split('\n').map((paragraph, index) => (
-            paragraph.trim() && <p key={index} className="normal-case">{paragraph}</p>
-          ))}
+        <div className="w-full max-w-[2000px] mx-auto">
+          {/*
+            Móvil: banda alta con título abajo → primera vista solo título.
+            Escritorio: fila título | cliente (sin banda extra).
+          */}
+          <div className="min-h-[78vh] md:min-h-0 flex flex-col justify-end md:block pb-5 md:pb-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-10 lg:gap-16 items-end">
+              <div className="space-y-4 sm:space-y-5">
+                <motion.h1
+                  className="text-[2rem] leading-[1.05] sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-[5.25rem] font-bold tracking-wider text-white drop-shadow-lg break-words"
+                  initial={{ opacity: 0, y: 28 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 28 }}
+                  transition={{ duration: 0.7, ease: 'easeOut' }}
+                >
+                  {project?.name}
+                </motion.h1>
+
+                <motion.div
+                  className="w-14 sm:w-16 md:w-20 h-1 bg-green-500"
+                  initial={{ opacity: 0, scaleX: 0 }}
+                  animate={isInView ? { opacity: 1, scaleX: 1 } : { opacity: 0, scaleX: 0 }}
+                  transition={{ duration: 0.45, delay: 0.1, ease: 'easeOut' }}
+                  style={{ originX: 0 }}
+                />
+
+                {/* Móvil/tablet: cliente debajo del título */}
+                <div className="md:hidden">{renderClient()}</div>
+              </div>
+
+              {/* Escritorio: cliente a la derecha */}
+              <div className="hidden md:block">{renderClient('md:text-right md:pb-1')}</div>
+            </div>
+          </div>
+
+          <div className="space-y-6 md:space-y-8 lg:space-y-10 mt-6 md:mt-8">
+            <div className="space-y-4 md:space-y-5 roboto-font text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed text-white/90 max-w-3xl lg:max-w-4xl">
+              {paragraphs.map((paragraph, index) => (
+                <motion.p
+                  key={index}
+                  className="normal-case"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+                  transition={{ duration: 0.5, delay: 0.2 + index * 0.1, ease: 'easeOut' }}
+                >
+                  {paragraph}
+                </motion.p>
+              ))}
+            </div>
+
+            <motion.div
+              className="w-14 sm:w-16 md:w-20 h-1 bg-white"
+              initial={{ opacity: 0, scaleX: 0 }}
+              animate={isInView ? { opacity: 1, scaleX: 1 } : { opacity: 0, scaleX: 0 }}
+              transition={{ duration: 0.45, delay: 0.35, ease: 'easeOut' }}
+              style={{ originX: 0 }}
+            />
+
+            <motion.p
+              className="roboto-font text-lg sm:text-xl md:text-2xl lg:text-3xl font-medium flex items-center flex-wrap gap-y-1"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.5, delay: 0.4, ease: 'easeOut' }}
+            >
+              {project?.year && project.year.trim() !== '' ? (
+                <>
+                  <span>{project.year}</span>
+                  <span className="opacity-50 mx-3">—</span>
+                </>
+              ) : null}
+              <span className="text-green-500">{project?.category}</span>
+            </motion.p>
+          </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </section>
   );
 };
 
@@ -445,7 +438,7 @@ const VideoSection = ({ project }) => {
   return (
     <motion.div 
       ref={ref}
-      className="mt-12 md:px-8 lg:px-12"
+      className="pt-4 md:pt-6 md:px-0"
       initial={{ y: 30 }}
       animate={isInView ? { y: 0 } : { y: 30 }}
       transition={{ duration: 0.7, ease: "easeOut" }}
@@ -490,6 +483,11 @@ const ImageSkeleton = () => (
 // Componente para el visor de imágenes a pantalla completa
 const ImageViewer = ({ isOpen, images, currentIndex, onClose, onPrev, onNext, project }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Resetear el estado de carga cuando cambia la imagen
   useEffect(() => {
@@ -510,24 +508,27 @@ const ImageViewer = ({ isOpen, images, currentIndex, onClose, onPrev, onNext, pr
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose, onPrev, onNext]);
   
-  // Bloquear scroll cuando el visor está abierto
+  // Bloquear scroll y ocultar navbar (el hamburguesa queda por encima si no)
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('lightbox-open');
     } else {
       document.body.style.overflow = 'auto';
+      document.body.classList.remove('lightbox-open');
     }
     return () => {
       document.body.style.overflow = 'auto';
+      document.body.classList.remove('lightbox-open');
     };
   }, [isOpen]);
   
-  if (!isOpen) return null;
-  
-  return (
+  if (!isOpen || !mounted) return null;
+
+  const viewer = (
     <AnimatePresence>
       <motion.div 
-        className="fixed inset-0 z-50 bg-black w-screen h-screen flex items-center justify-center"
+        className="fixed inset-0 z-[9999] bg-black w-screen h-screen flex items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -540,7 +541,7 @@ const ImageViewer = ({ isOpen, images, currentIndex, onClose, onPrev, onNext, pr
             e.stopPropagation(); // Evitar doble cierre
             onClose();
           }}
-          className="absolute top-4 right-4 z-50 text-white text-4xl md:text-5xl lg:text-6xl hover:text-green-500 transition-colors p-2"
+          className="absolute top-4 right-4 z-[10000] text-white text-4xl md:text-5xl lg:text-6xl hover:text-green-500 transition-colors p-2"
           aria-label="Cerrar visor"
         >
           <IoMdClose />
@@ -596,6 +597,34 @@ const ImageViewer = ({ isOpen, images, currentIndex, onClose, onPrev, onNext, pr
       </motion.div>
     </AnimatePresence>
   );
+
+  return createPortal(viewer, document.body);
+};
+
+const GalleryItem = ({ image, index, projectName, onOpen }) => {
+  const imageRef = useRef(null);
+  const isImageInView = useInView(imageRef, { once: false, amount: 0.2 });
+
+  return (
+    <motion.div
+      ref={imageRef}
+      initial={{ y: 20 }}
+      animate={isImageInView ? { y: 0 } : { y: 20 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="aspect-video bg-gray-800 rounded-lg overflow-hidden relative group cursor-pointer"
+      onClick={() => onOpen(index)}
+    >
+      <Image
+        src={image.imageUrl}
+        alt={`${projectName} - Imagen ${index + 1}`}
+        fill
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+        className="object-cover transition-transform duration-300 group-hover:scale-110"
+        quality={75}
+      />
+      <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+    </motion.div>
+  );
 };
 
 const GallerySection = ({ project, galleryImages }) => {
@@ -617,7 +646,6 @@ const GallerySection = ({ project, galleryImages }) => {
     if (currentImageIndex > 0) {
       setCurrentImageIndex(currentImageIndex - 1);
     } else {
-      // Si estamos en la primera imagen, ir a la última (navegación circular)
       setCurrentImageIndex(galleryImages.length - 1);
     }
   };
@@ -626,7 +654,6 @@ const GallerySection = ({ project, galleryImages }) => {
     if (currentImageIndex < galleryImages.length - 1) {
       setCurrentImageIndex(currentImageIndex + 1);
     } else {
-      // Si estamos en la última imagen, volver a la primera (navegación circular)
       setCurrentImageIndex(0);
     }
   };
@@ -635,43 +662,25 @@ const GallerySection = ({ project, galleryImages }) => {
     <>
       <motion.div 
         ref={ref}
-        className={`${project?.category === 'Fotos' ? 'mt-6' : 'mt-12'} md:px-8 lg:px-12`}
+        className="pt-6 md:pt-8"
         initial={{ y: 30 }}
         animate={isInView ? { y: 0 } : { y: 30 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
       >
         <h2 className="text-3xl md:text-4xl font-black italic text-white tracking-wide mb-8">Galería</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {galleryImages.map((image, index) => {
-            const imageRef = useRef(null);
-            const isImageInView = useInView(imageRef, { once: false, amount: 0.2 });
-            
-            return (
-              <motion.div
-                key={index}
-                ref={imageRef}
-                initial={{ y: 20 }}
-                animate={isImageInView ? { y: 0 } : { y: 20 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-                className="aspect-video bg-gray-800 rounded-lg overflow-hidden relative group cursor-pointer"
-                onClick={() => openViewer(index)}
-              >
-                <Image 
-                  src={image.imageUrl}
-                  alt={`${project?.name} - Imagen ${index + 1}`}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
-                  quality={75}
-                />
-                <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
-              </motion.div>
-            );
-          })}
+          {galleryImages.map((image, index) => (
+            <GalleryItem
+              key={image.name || index}
+              image={image}
+              index={index}
+              projectName={project?.name}
+              onOpen={openViewer}
+            />
+          ))}
         </div>
       </motion.div>
       
-      {/* Visor de imágenes */}
       <ImageViewer 
         isOpen={viewerOpen}
         images={galleryImages}

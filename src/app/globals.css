@@ -8,6 +8,12 @@ html {
   ;
 }
 
+/* Ocultar navbar/hamburguesa cuando el lightbox de galería está abierto */
+body.lightbox-open nav {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* Clase para aplicar la fuente Roboto a párrafos específicos */
 .roboto-font {
   font-family: 'Noto Sans', sans-serif;

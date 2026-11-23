@@ -16,10 +16,15 @@ const getImageData = async (folder) => {
     return urlCache.get(folder);
   }
 
-  const extensions = ['png', 'jpg'];
-  
-  for (const ext of extensions) {
-    const url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/image1.${ext}`;
+  // Previews: prefer thumb, then full cover
+  const candidates = [
+    'image1_thumb.jpg',
+    'image1.jpg',
+    'image1.png',
+  ];
+
+  for (const fileName of candidates) {
+    const url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/${fileName}`;
     try {
       const response = await fetch(url, { method: 'HEAD' });
       if (response.ok) {
@@ -28,7 +33,6 @@ const getImageData = async (folder) => {
           imageUrl,
           srcSet: generateSupabaseImageSrcSet(imageUrl)
         };
-        // Guardar en caché
         urlCache.set(folder, imageData);
         return imageData;
       }
@@ -36,15 +40,13 @@ const getImageData = async (folder) => {
       // Error silencioso al verificar la imagen
     }
   }
-  
-  // Si no se encuentra ninguna imagen, usar fallback
-  const fallbackUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/image1.png`;
+
+  const fallbackUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/image1_thumb.jpg`;
   const imageUrl = getOptimizedImageUrl(fallbackUrl);
   const imageData = {
     imageUrl,
     srcSet: generateSupabaseImageSrcSet(imageUrl)
   };
-  // Guardar en caché
   urlCache.set(folder, imageData);
   return imageData;
 };
@@ -95,7 +97,7 @@ const Showcase = () => {
         let query = supabase
           .from('page')
           .select('*')
-          .order('id', { ascending: true });
+          .order('created_at', { ascending: false });
 
         if (selectedCategory !== 'Todos') {
           query = query.eq('category', selectedCategory);

@@ -30,15 +30,19 @@ const getImageData = async (folder) => {
     return urlCache.get(folder);
   }
 
-  const extensions = ['png', 'jpg'];
-  
-  for (const ext of extensions) {
-    const url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/image1.${ext}`;
+  // Previews: prefer thumb, then full cover
+  const candidates = [
+    'image1_thumb.jpg',
+    'image1.jpg',
+    'image1.png',
+  ];
+
+  for (const fileName of candidates) {
+    const url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/${fileName}`;
     try {
       const response = await fetch(url, { method: 'HEAD' });
       if (response.ok) {
         const imageUrl = getOptimizedImageUrl(url);
-        // Generar una versión muy pequeña para el blur
         const tinyImageUrl = `${url}?width=20&quality=20&format=webp`;
         const imageData = {
           imageUrl,
@@ -61,7 +65,6 @@ const getImageData = async (folder) => {
             </svg>`
           )}`
         };
-        // Guardar en caché
         urlCache.set(folder, imageData);
         return imageData;
       }
@@ -69,16 +72,14 @@ const getImageData = async (folder) => {
       // Error silencioso al verificar la imagen
     }
   }
-  
-  // Si no se encuentra ninguna imagen, usar fallback
-  const fallbackUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/image1.png`;
+
+  const fallbackUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${folder}/image1_thumb.jpg`;
   const imageUrl = getOptimizedImageUrl(fallbackUrl);
   const imageData = {
     imageUrl,
     srcSet: generateSupabaseImageSrcSet(imageUrl),
     blurDataUrl: getBlurDataUrl()
   };
-  // Guardar en caché
   urlCache.set(folder, imageData);
   return imageData;
 };
@@ -110,8 +111,8 @@ const Banner = () => {
       setLoading(true);
       try {
         
-        // Generar 5 números aleatorios únicos entre 1 y 26
-        const randomIds = Array.from({ length: 26 }, (_, i) => i + 1)
+        // Generar 5 números aleatorios únicos entre 1 y 31
+        const randomIds = Array.from({ length: 31 }, (_, i) => i + 1)
           .sort(() => Math.random() - 0.5)
           .slice(0, 5);
 
