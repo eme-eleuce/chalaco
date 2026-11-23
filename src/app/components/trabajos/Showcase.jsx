@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, BUCKET_NAME, SUPABASE_URL } from '../../utils/supabase';
 import { getOptimizedImageUrl, generateSupabaseImageSrcSet } from '../../utils/imageUtils';
+import SmoothImage from '../SmoothImage';
 
 // Cache de URLs y blur data
 const urlCache = new Map();
@@ -247,11 +248,12 @@ const Showcase = () => {
         <div className="flex justify-center items-center min-h-[80vh]">
           <div className="animate-heartbeat">
             <Image
-              src="/photos/logob.png"
-              alt="Loading..."
-              width={250}
-              height={250}
+              src="/photos/carga.png"
+              alt="Cargando..."
+              width={280}
+              height={160}
               priority
+              className="w-44 sm:w-56 md:w-64 h-auto"
             />
           </div>
         </div>
@@ -330,16 +332,15 @@ const Showcase = () => {
                           onClick={() => console.log('Navegando al proyecto:', project)}
                         >
                           <div className="aspect-video bg-gray-800 rounded-lg overflow-hidden relative">
-                            <Image
+                            <SmoothImage
                               src={project.imageUrl}
                               alt={project.name}
                               fill
                               sizes="(max-width: 640px) 100vw, 33vw"
                               className="object-cover transition-transform duration-300 group-hover:scale-110"
                               quality={75}
-                              priority={index < 3} // Priorizar carga de las primeras 3 imágenes
+                              priority={index < 3}
                             />
-                            {/* Se eliminó el overlay de fondo negro en hover */}
                           </div>
                           <div className="space-y-2 px-1 group">
                             <h3 className="text-2xl md:text-3xl font-black italic text-white tracking-wide leading-tight group-hover:text-green-500 transition-colors">{project.name}</h3>

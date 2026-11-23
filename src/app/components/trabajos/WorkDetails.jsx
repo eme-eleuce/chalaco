@@ -10,6 +10,7 @@ import { IoMdArrowRoundBack, IoMdClose } from 'react-icons/io';
 import { IoChevronBackOutline, IoChevronForwardOutline } from 'react-icons/io5';
 import { supabase, BUCKET_NAME, SUPABASE_URL } from '../../utils/supabase';
 import { getOptimizedImageUrl, generateSupabaseImageSrcSet } from '../../utils/imageUtils';
+import SmoothImage from '../SmoothImage';
 
 // Cache de URLs y blur data
 const urlCache = new Map();
@@ -158,11 +159,12 @@ const WorkDetails = ({ projectId }) => {
         <div className="flex justify-center items-center min-h-[80vh]">
           <div className="animate-heartbeat">
             <Image
-              src="/photos/logob.png"
-              alt="Loading..."
-              width={250}
-              height={250}
+              src="/photos/carga.png"
+              alt="Cargando..."
+              width={280}
+              height={160}
               priority
+              className="w-44 sm:w-56 md:w-64 h-auto"
             />
           </div>
         </div>
@@ -250,23 +252,31 @@ const WorkDetails = ({ projectId }) => {
 
 // Solo imagen sticky — el título vive únicamente en el bloque de scroll
 const ProjectHeroParallax = ({ mainImage, project }) => {
+  const [thumbLoaded, setThumbLoaded] = useState(false);
   const [fullLoaded, setFullLoaded] = useState(false);
 
   useEffect(() => {
+    setThumbLoaded(false);
     setFullLoaded(false);
   }, [mainImage.imageUrl]);
 
   return (
     <div className="sticky top-0 w-full h-screen overflow-hidden bg-gray-900">
+      {/* Placeholder mientras llega el thumb */}
+      {!thumbLoaded && !fullLoaded && (
+        <div className="absolute inset-0 bg-gray-900 animate-pulse" aria-hidden="true" />
+      )}
+
       {mainImage.thumbUrl && (
         <Image
           src={mainImage.thumbUrl}
           alt=""
           fill
           sizes="100vw"
-          className="object-cover"
+          className={`object-cover transition-opacity duration-500 ${thumbLoaded || fullLoaded ? 'opacity-100' : 'opacity-0'}`}
           priority
           quality={60}
+          onLoad={() => setThumbLoaded(true)}
         />
       )}
       <Image
@@ -284,78 +294,174 @@ const ProjectHeroParallax = ({ mainImage, project }) => {
   );
 };
 
+const DESKTOP_MIN_WIDTH = 1024; // escritorio real
+
 const ProjectDetailsSection = ({ project }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.12 });
+  const [isDesktop, setIsDesktop] = useState(null); // null hasta medir la pantalla
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${DESKTOP_MIN_WIDTH}px)`);
+    const apply = () => setIsDesktop(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
   const paragraphs = (project?.description || '')
     .split('\n')
     .map((p) => p.trim())
     .filter(Boolean);
 
-  const renderClient = (className = '') => (
-    <motion.p
-      className={`roboto-font text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold ${className}`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-      transition={{ duration: 0.55, delay: 0.15, ease: 'easeOut' }}
-    >
-      <span className="text-white/90">Cliente:</span>{' '}
-      <span className="text-green-500">{project?.client}</span>
-    </motion.p>
-  );
+  const gradientStyle = {
+    background:
+      'linear-gradient(to bottom, rgba(10,10,10,0) 0%, rgba(10,10,10,0.25) 20%, rgba(10,10,10,0.85) 48%, #0a0a0a 65%, #0a0a0a 100%)',
+  };
+
+  if (isDesktop === null) {
+    return <section ref={ref} className="relative z-10 w-full min-h-[40vh]" />;
+  }
 
   return (
-    <section
-      ref={ref}
-      className="relative z-10 w-full -mt-[78vh] md:-mt-[28vh] lg:-mt-[24vh]"
-    >
-      <div
-        className="px-5 sm:px-8 md:px-12 lg:px-16 xl:px-24 pt-0 md:pt-8 lg:pt-10 pb-10 md:pb-12"
-        style={{
-          background:
-            'linear-gradient(to bottom, rgba(10,10,10,0) 0%, rgba(10,10,10,0.2) 28%, rgba(10,10,10,0.75) 55%, #0a0a0a 72%, #0a0a0a 100%)',
-        }}
-      >
-        <div className="w-full max-w-[2000px] mx-auto">
-          {/*
-            Móvil: banda alta con título abajo → primera vista solo título.
-            Escritorio: fila título | cliente (sin banda extra).
-          */}
-          <div className="min-h-[78vh] md:min-h-0 flex flex-col justify-end md:block pb-5 md:pb-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-10 lg:gap-16 items-end">
-              <div className="space-y-4 sm:space-y-5">
+    <section ref={ref} className="relative z-10 w-full" style={gradientStyle}>
+      {isDesktop ? (
+        /*
+          Escritorio: primera vista = imagen + título izq | cliente der.
+          La descripción queda debajo del fold (hay que scrollear).
+        */
+        <div style={{ marginTop: '-42vh' }}>
+          <div
+            className="px-12 xl:px-24"
+            style={{
+              minHeight: '42vh',
+              display: 'flex',
+              alignItems: 'flex-end',
+              paddingBottom: '4rem',
+            }}
+          >
+            <div
+              className="w-full max-w-[2000px] mx-auto"
+              style={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'space-between',
+                gap: '3rem',
+              }}
+            >
+              <div style={{ flex: '1 1 55%', minWidth: 0, maxWidth: '60%' }}>
                 <motion.h1
-                  className="text-[2rem] leading-[1.05] sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-[5.25rem] font-bold tracking-wider text-white drop-shadow-lg break-words"
+                  className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-wider text-white drop-shadow-lg leading-[1.05]"
                   initial={{ opacity: 0, y: 28 }}
                   animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 28 }}
                   transition={{ duration: 0.7, ease: 'easeOut' }}
                 >
                   {project?.name}
                 </motion.h1>
-
                 <motion.div
-                  className="w-14 sm:w-16 md:w-20 h-1 bg-green-500"
+                  className="mt-5 w-20 h-1 bg-green-500"
                   initial={{ opacity: 0, scaleX: 0 }}
                   animate={isInView ? { opacity: 1, scaleX: 1 } : { opacity: 0, scaleX: 0 }}
                   transition={{ duration: 0.45, delay: 0.1, ease: 'easeOut' }}
                   style={{ originX: 0 }}
                 />
-
-                {/* Móvil/tablet: cliente debajo del título */}
-                <div className="md:hidden">{renderClient()}</div>
               </div>
 
-              {/* Escritorio: cliente a la derecha */}
-              <div className="hidden md:block">{renderClient('md:text-right md:pb-1')}</div>
+              <motion.p
+                className="text-3xl lg:text-4xl font-bold tracking-wide"
+                style={{ textAlign: 'right', maxWidth: '35%', flexShrink: 0 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.55, delay: 0.15, ease: 'easeOut' }}
+              >
+                <span className="text-white/90">Cliente:</span>{' '}
+                <span className="text-green-500">{project?.client}</span>
+              </motion.p>
             </div>
           </div>
 
-          <div className="space-y-6 md:space-y-8 lg:space-y-10 mt-6 md:mt-8">
-            <div className="space-y-4 md:space-y-5 roboto-font text-base sm:text-lg md:text-xl lg:text-2xl leading-relaxed text-white/90 max-w-3xl lg:max-w-4xl">
+          <div className="px-12 xl:px-24 pb-12 pt-10">
+            <div className="w-full max-w-[2000px] mx-auto space-y-8">
+              <div className="space-y-6 roboto-font text-xl lg:text-2xl leading-relaxed text-white/90 max-w-4xl text-justify">
+                {paragraphs.map((paragraph, index) => (
+                  <motion.p
+                    key={index}
+                    className="normal-case text-justify"
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+                    transition={{ duration: 0.5, delay: 0.2 + index * 0.1, ease: 'easeOut' }}
+                  >
+                    {paragraph}
+                  </motion.p>
+                ))}
+              </div>
+
+              <motion.div
+                className="w-20 h-1 bg-white"
+                initial={{ opacity: 0, scaleX: 0 }}
+                animate={isInView ? { opacity: 1, scaleX: 1 } : { opacity: 0, scaleX: 0 }}
+                transition={{ duration: 0.45, delay: 0.35, ease: 'easeOut' }}
+                style={{ originX: 0 }}
+              />
+
+              <motion.p
+                className="roboto-font text-2xl lg:text-3xl font-medium"
+                initial={{ opacity: 0, y: 20 }}
+                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.5, delay: 0.4, ease: 'easeOut' }}
+              >
+                {project?.year && project.year.trim() !== '' ? (
+                  <>
+                    <span>{project.year}</span>
+                    <span className="opacity-50 mx-3">—</span>
+                  </>
+                ) : null}
+                <span className="text-green-500">{project?.category}</span>
+              </motion.p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Móvil / tablet: título + cliente apilados abajo */
+        <>
+          <div
+            className="px-5 sm:px-8 flex flex-col justify-end pb-6"
+            style={{ marginTop: '-78vh', minHeight: '78vh' }}
+          >
+            <div className="space-y-4">
+              <motion.h1
+                className="text-4xl sm:text-5xl font-bold tracking-wider text-white drop-shadow-lg leading-[1.05] break-words"
+                initial={{ opacity: 0, y: 28 }}
+                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 28 }}
+                transition={{ duration: 0.7, ease: 'easeOut' }}
+              >
+                {project?.name}
+              </motion.h1>
+              <motion.div
+                className="w-14 h-1 bg-green-500"
+                initial={{ opacity: 0, scaleX: 0 }}
+                animate={isInView ? { opacity: 1, scaleX: 1 } : { opacity: 0, scaleX: 0 }}
+                transition={{ duration: 0.45, delay: 0.1, ease: 'easeOut' }}
+                style={{ originX: 0 }}
+              />
+              <motion.p
+                className="text-xl sm:text-2xl font-bold tracking-wide"
+                initial={{ opacity: 0, y: 20 }}
+                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.55, delay: 0.15, ease: 'easeOut' }}
+              >
+                <span className="text-white/90">Cliente:</span>{' '}
+                <span className="text-green-500">{project?.client}</span>
+              </motion.p>
+            </div>
+          </div>
+
+          <div className="px-5 sm:px-8 pb-10 pt-6 space-y-6">
+            <div className="space-y-4 roboto-font text-base sm:text-lg leading-relaxed text-white/90 text-justify">
               {paragraphs.map((paragraph, index) => (
                 <motion.p
                   key={index}
-                  className="normal-case"
+                  className="normal-case text-justify"
                   initial={{ opacity: 0, y: 24 }}
                   animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
                   transition={{ duration: 0.5, delay: 0.2 + index * 0.1, ease: 'easeOut' }}
@@ -364,17 +470,15 @@ const ProjectDetailsSection = ({ project }) => {
                 </motion.p>
               ))}
             </div>
-
             <motion.div
-              className="w-14 sm:w-16 md:w-20 h-1 bg-white"
+              className="w-14 h-1 bg-white"
               initial={{ opacity: 0, scaleX: 0 }}
               animate={isInView ? { opacity: 1, scaleX: 1 } : { opacity: 0, scaleX: 0 }}
               transition={{ duration: 0.45, delay: 0.35, ease: 'easeOut' }}
               style={{ originX: 0 }}
             />
-
             <motion.p
-              className="roboto-font text-lg sm:text-xl md:text-2xl lg:text-3xl font-medium flex items-center flex-wrap gap-y-1"
+              className="roboto-font text-lg sm:text-xl font-medium"
               initial={{ opacity: 0, y: 20 }}
               animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
               transition={{ duration: 0.5, delay: 0.4, ease: 'easeOut' }}
@@ -388,8 +492,8 @@ const ProjectDetailsSection = ({ project }) => {
               <span className="text-green-500">{project?.category}</span>
             </motion.p>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </section>
   );
 };
@@ -614,7 +718,7 @@ const GalleryItem = ({ image, index, projectName, onOpen }) => {
       className="aspect-video bg-gray-800 rounded-lg overflow-hidden relative group cursor-pointer"
       onClick={() => onOpen(index)}
     >
-      <Image
+      <SmoothImage
         src={image.imageUrl}
         alt={`${projectName} - Imagen ${index + 1}`}
         fill

@@ -33,11 +33,12 @@ export default function Hero() {
       <div className={`fixed inset-0 flex items-center justify-center bg-black transition-opacity duration-300 ${showLogo ? 'opacity-100 z-50' : 'opacity-0 pointer-events-none z-0'}`}>
         <div className="animate-heartbeat">
           <Image
-            src="/photos/logob.png"
+            src="/photos/carga.png"
             alt="Chalaco Films"
-            width={250}
-            height={250}
+            width={280}
+            height={160}
             priority
+            className="w-44 sm:w-56 md:w-64 h-auto"
           />
         </div>
       </div>

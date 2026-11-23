@@ -14,9 +14,10 @@ body.lightbox-open nav {
   pointer-events: none !important;
 }
 
-/* Clase para aplicar la fuente Roboto a párrafos específicos */
+/* Secundaria: Source Sans 3 (descripciones y cuerpo) */
 .roboto-font {
-  font-family: 'Noto Sans', sans-serif;
+  font-family: var(--font-source-sans), 'Source Sans 3', sans-serif;
+  font-weight: 400;
 }
 
 @keyframes heartbeat {

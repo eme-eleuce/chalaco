@@ -9,6 +9,7 @@ import RotatingText from './RotatingText';
 import './RotatingText.css';
 import { supabase, BUCKET_NAME, SUPABASE_URL } from '../utils/supabase';
 import { getOptimizedImageUrl, generateSupabaseImageSrcSet, getBlurDataUrl } from '../utils/imageUtils';
+import SmoothImage from './SmoothImage';
 
 const shuffleArray = (array) => {
   for (let i = array.length - 1; i > 0; i--) {
@@ -213,14 +214,13 @@ const Banner = () => {
                 >
                   <Link href={`/trabajos/${project.id}`} className="block cursor-pointer">
                     <div className="group aspect-video bg-gray-800 rounded-lg overflow-hidden relative">
-                      <Image
+                      <SmoothImage
                         src={project.imageUrl}
                         alt={project.name}
                         fill
                         sizes="(max-width: 640px) 100vw, 50vw"
                         className="object-cover transition-transform duration-300 group-hover:scale-110"
                         quality={75}
-                        placeholder="blur"
                         blurDataURL={project.blurDataUrl}
                         priority={index === 0}
                       />
@@ -252,14 +252,13 @@ const Banner = () => {
                 >
                   <Link href={`/trabajos/${project.id}`} className="block cursor-pointer">
                     <div className="group aspect-video bg-gray-800 rounded-lg overflow-hidden relative">
-                      <Image
+                      <SmoothImage
                         src={project.imageUrl}
                         alt={project.name}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1080px) 33vw, 33vw"
                         className="object-cover transition-transform duration-300 group-hover:scale-110"
                         quality={75}
-                        placeholder="blur"
                         blurDataURL={project.blurDataUrl}
                         priority={false}
                       />
