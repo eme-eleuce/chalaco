@@ -66,9 +66,9 @@ export const metadata = {
     siteName,
     images: [
       {
-        url: '/photos/logob.png',
+        url: '/photos/tem.png',
         width: 1200,
-        height: 630,
+        height: 1200,
         alt: 'Chalaco Films — Productora Audiovisual',
       },
     ],
@@ -80,7 +80,7 @@ export const metadata = {
     creator: '@chalacofilms',
     images: [
       {
-        url: '/photos/logob.png',
+        url: '/photos/tem.png',
         alt: 'Chalaco Films — Productora Audiovisual',
       },
     ],
@@ -112,7 +112,7 @@ const jsonLd = {
       url: siteUrl,
       logo: {
         '@type': 'ImageObject',
-        url: `${siteUrl}/photos/logob.png`,
+        url: `${siteUrl}/photos/tem.png`,
       },
       email: 'info@chalacofilms.com',
       sameAs: ['https://www.instagram.com/chalacofilms/'],
@@ -136,7 +136,7 @@ const jsonLd = {
       '@type': 'ProfessionalService',
       '@id': `${siteUrl}/#business`,
       name: siteName,
-      image: `${siteUrl}/photos/logob.png`,
+      image: `${siteUrl}/photos/tem.png`,
       url: siteUrl,
       email: 'info@chalacofilms.com',
       description: defaultDescription,

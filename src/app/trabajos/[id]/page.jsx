@@ -10,7 +10,7 @@ function truncate(text, max = 160) {
 
 function projectImageUrl(storageFolder) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!supabaseUrl || !storageFolder) return '/photos/logob.png';
+  if (!supabaseUrl || !storageFolder) return '/photos/tem.png';
   return `${supabaseUrl}/storage/v1/object/public/chalaco/${storageFolder}/image1_thumb.jpg`;
 }
 
